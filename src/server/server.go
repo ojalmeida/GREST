@@ -18,11 +18,11 @@ var apiDefaultHandler = func(writer http.ResponseWriter, request *http.Request) 
 
 }
 
-var pathMappings []db.PathMapping
+var behaviors []db.Behavior
 
 func init() {
 
-	pathMappings = db.GetPathMappings()
+	behaviors = db.GetBehaviors()
 
 }
 
@@ -30,9 +30,9 @@ func StartServer() {
 
 	http.HandleFunc("/", apiDefaultHandler)
 
-	for _, pathMapping := range pathMappings {
+	for _, behavior := range behaviors {
 
-		http.HandleFunc(pathMapping.Path, handlerFactory(pathMapping))
+		setHandler(behavior)
 
 	}
 
@@ -40,11 +40,16 @@ func StartServer() {
 
 }
 
-func handlerFactory(pathMapping db.PathMapping) func(writer http.ResponseWriter, request *http.Request) {
+func setHandler(behavior db.Behavior) {
+
+	http.HandleFunc(behavior.PathMapping.Path, handlerFactory(behavior))
+}
+
+func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, request *http.Request) {
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		_, _ = io.WriteString(writer, fmt.Sprintf("You entered in the %s endpoint", pathMapping.Table))
+		_, _ = io.WriteString(writer, fmt.Sprintf("You entered in the %s endpoint", behavior.PathMapping.Table))
 
 	}
 }

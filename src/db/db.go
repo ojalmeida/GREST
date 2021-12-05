@@ -29,24 +29,95 @@ func init() {
 	connection = _connection
 }
 
-type PathMapping struct {
+type Behavior struct {
+	PathMapping pathMapping
+	KeyMapping  keyMapping
+}
+
+type keyMapping struct {
 	Path  string
 	Table string
 }
 
-func GetPathMappings() []PathMapping {
+type pathMapping struct {
+	Path  string
+	Table string
+}
 
-	var pathMappings []PathMapping
+func getPathMapping(id int) pathMapping {
 
 	var (
-		id    int
 		path  string
 		table string
 	)
 
 	rows, err := connection.Query(`
 
-		SELECT * FROM path_mappings;
+		SELECT path_name, table_name FROM path_mappings WHERE path_mapping_id = ?;
+`, id)
+	defer rows.Close()
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for rows.Next() {
+
+		err := rows.Scan(&path, &table)
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+	}
+
+	return pathMapping{path, table}
+
+}
+
+func getKeyMapping(id int) keyMapping {
+
+	var (
+		key    string
+		column string
+	)
+
+	rows, err := connection.Query(`
+
+		SELECT key_name, column_name FROM key_mappings WHERE key_mapping_id = ?;
+`, id)
+	defer rows.Close()
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for rows.Next() {
+
+		err := rows.Scan(&key, &column)
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+	}
+
+	return keyMapping{key, column}
+
+}
+
+func GetBehaviors() []Behavior {
+
+	var behaviors []Behavior
+
+	var (
+		pathMappingId int
+		keyMappingId  int
+	)
+
+	rows, err := connection.Query(`
+
+		SELECT path_mapping_id, key_mapping_id FROM behaviors;
 `)
 	defer rows.Close()
 
@@ -56,16 +127,16 @@ func GetPathMappings() []PathMapping {
 
 	for rows.Next() {
 
-		err := rows.Scan(&id, &path, &table)
+		err := rows.Scan(&pathMappingId, &keyMappingId)
 
 		if err != nil {
 			panic(err.Error())
 		}
 
-		pathMappings = append(pathMappings, PathMapping{path, table})
+		behaviors = append(behaviors, Behavior{getPathMapping(pathMappingId), getKeyMapping(keyMappingId)})
 
 	}
 
-	return pathMappings
+	return behaviors
 
 }
