@@ -1,0 +1,122 @@
+@font-face {
+  font-family: "Roboto Light";
+  src: url("/frontend/static/fonts/Roboto-Light.ttf"); }
+@font-face {
+  font-family: "Roboto Regular";
+  src: url("/frontend/static/fonts/Roboto-Regular.ttf"); }
+@keyframes APIItemAnimationIn {
+  from {
+    background-color: #DEDEDE; }
+  to {
+    background-color: #C2C2C2; } }
+@keyframes APIItemAnimationOut {
+  from {
+    background-color: #C2C2C2; }
+  to {
+    background-color: #DEDEDE; } }
+@keyframes APIPaneAnimationIn {
+  from {
+    top: 100vh; }
+  to {
+    top: 0; } }
+@keyframes APIPaneAnimationOut {
+  from {
+    top: 0; }
+  to {
+    top: 100vh; } }
+@keyframes initialFadeIn {
+  from {
+    opacity: 0; }
+  to {
+    opacity: 1; } }
+body {
+  background: #1A1A1A;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font-family: "Roboto Light", sans-serif;
+  font-size: 14px; }
+
+header {
+  color: #FFF;
+  background-color: #ff2020;
+  height: 7%;
+  display: flex;
+  align-items: center;
+  justify-content: center; }
+
+#wrapper {
+  position: relative; }
+  #wrapper #api-pane {
+    position: absolute;
+    z-index: 10;
+    top: 100vh;
+    width: 50%;
+    height: 100%;
+    background-color: #F2F2F2; }
+    #wrapper #api-pane #header {
+      font-family: "Roboto Regular", sans-serif;
+      font-size: 1.6rem;
+      height: 7vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #C2C2C2; }
+    #wrapper #api-pane #navbar {
+      font-family: "Roboto Light", sans-serif;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      height: 7vh;
+      background-color: #DEDEDE; }
+      #wrapper #api-pane #navbar div[is-selected='true'] {
+        background-color: #C2C2C2 !important; }
+      #wrapper #api-pane #navbar div[id*='item'] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%; }
+        #wrapper #api-pane #navbar div[id*='item']:hover {
+          animation: .3s ease-in-out both APIItemAnimationIn; }
+        #wrapper #api-pane #navbar div[id*='item']:not(#wrapper #api-pane #navbar div[id*='item']:hover) {
+          animation: .3s ease-in-out both APIItemAnimationOut; }
+        #wrapper #api-pane #navbar div[id*='item'] svg {
+          padding-right: 5px; }
+  #wrapper div[is-visible="true"] {
+    animation: .2s ease-in-out both APIPaneAnimationIn;
+    opacity: 1;
+    z-index: 10; }
+  #wrapper div[is-visible="false"] {
+    animation: .2s ease-in-out both APIPaneAnimationOut;
+    opacity: 1;
+    z-index: -1; }
+
+#server-images {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center; }
+  #server-images #api, #server-images #db {
+    color: #FFF;
+    font-family: "Roboto Regular", sans-serif;
+    font-size: 1.5em;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: start;
+    flex: 0.1; }
+    #server-images #api img, #server-images #db img {
+      padding-bottom: 2vh;
+      width: 8vw; }
+
+#arrow {
+  padding: 2%; }
+
+/*# sourceMappingURL=style.css.map */
