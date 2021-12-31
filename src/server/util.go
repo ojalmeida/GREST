@@ -15,9 +15,9 @@ func correctData(behavior db.Behavior, data map[string]string) (correctedData ma
 			bKey := behavior.KeyMappings[i].Key
 			bColumn := behavior.KeyMappings[i].Column
 
-			if k == bKey {
+			if k == bColumn {
 
-				correctedData[bColumn] = v
+				correctedData[bKey] = v
 				found = true
 				break
 
