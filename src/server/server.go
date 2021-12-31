@@ -103,6 +103,7 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			var errors []string
 
 			writer.Header().Set("Content-Type", "application/json")
+			writer.Header().Set("Access-Control-Allow-Origin", "*")
 
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
 
