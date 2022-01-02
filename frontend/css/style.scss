@@ -1,0 +1,602 @@
+@font-face {
+
+    font-family: "Roboto Light";
+
+    src: url("/frontend/static/fonts/Roboto-Light.ttf");
+}
+
+@font-face {
+
+    font-family: "Roboto Regular";
+
+    src: url("/frontend/static/fonts/Roboto-Regular.ttf");
+}
+
+body {
+
+
+    background: #1A1A1A;
+
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+
+    border: 0;
+    padding: 0;
+    margin: 0;
+
+    font-family: "Roboto Regular", sans-serif;
+    font-size: 14px;
+
+}
+
+header {
+
+    color: #FFF;
+    background-color: #ff2020;
+
+    height: 7%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+
+}
+
+#wrapper {
+    position: relative;
+
+    #api-pane {
+
+        top: 0;
+
+        left: -50vw;
+
+        z-index: -1;
+
+        transition: ease-in-out .33s;
+
+        position: absolute;
+
+        width: 50%;
+        height: 100%;
+
+        background-color: #F2F2F2;
+
+        .header {
+
+            font-family: "Roboto Regular", sans-serif;
+            font-size: 1.6rem;
+
+            height: 7vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background-color: #C2C2C2;
+
+
+        }
+
+        .navbar {
+
+            font-family: "Roboto Regular", sans-serif;
+            font-size: 1rem;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+
+            height: 7vh;
+
+            cursor: pointer;
+
+            background-color: #DEDEDE;
+
+            .is-selected {
+
+                background-color: #C2C2C2 !important;
+            }
+
+            div[id*='item'] {
+
+                background-color: #DEDEDE;
+
+                &:hover {
+
+                    background-color: #C2C2C2;
+
+
+                }
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                width: 100%;
+                height: 100%;
+
+                transition: .16s ease-in-out;
+
+                svg {
+
+                    padding-right: 5px;
+                }
+
+
+            }
+
+
+        }
+
+    }
+
+    #db-pane {
+
+        top: 0;
+
+        right: -50vw;
+
+        z-index: -1;
+
+        transition: ease-in-out .33s;
+
+        position: absolute;
+
+
+        width: 50%;
+        height: 100%;
+
+        background-color: #505050;
+
+        .header {
+
+            font-family: "Roboto Regular", sans-serif;
+            font-size: 1.6rem;
+
+            color: #FFF;
+
+            height: 7vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background-color: #2C2C2C;
+
+
+        }
+
+        .navbar {
+
+            font-family: "Roboto Regular", sans-serif;
+            font-size: 1rem;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+
+            height: 7vh;
+
+            background-color: #393939;
+
+
+
+            .is-selected {
+
+                background-color: #2C2C2C !important;
+            }
+
+            div[id*='item'] {
+
+                background-color: #393939;
+
+                &:hover {
+
+                    background-color: #2C2C2C;
+
+
+                }
+
+                color: #FFF;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                flex: 1;
+
+                width: 100%;
+                height: 100%;
+
+                transition: .16s ease-in-out;
+
+                svg {
+
+                    padding-right: 5px;
+                }
+
+
+            }
+
+            .empty-item {
+
+                flex: 1;
+
+                pointer-events: none;
+            }
+
+
+        }
+
+    }
+
+    #api-pane.is-visible {
+
+        left: 0;
+
+        z-index: 10;
+
+        transition: ease-in-out .33s;
+    }
+
+    #db-pane.is-visible {
+
+        right: 0;
+
+        z-index: 10;
+
+        transition: ease-in-out .33s;
+    }
+
+    div[id*='menu'] {
+
+        width: 100%;
+        height: 100%;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        position: absolute;
+
+        opacity: 0;
+
+        z-index: -1;
+
+    }
+
+    div[id*='menu'].is-visible {
+
+        position: relative;
+
+        opacity: 1;
+
+        z-index: 10;
+
+    }
+
+}
+
+#server-images {
+
+    height: 100%;
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    #api, #db {
+
+        color: #FFF;
+        font-family: "Roboto Regular", sans-serif;
+        font-size: 1.5em;
+
+        cursor: pointer;
+
+        width: 100%;
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: start;
+        flex: 0.1;
+
+        transition: .16s;
+
+        img{
+
+            padding-bottom: 2vh;
+            width: 8vw;
+        }
+
+        &:hover {
+
+            transform: scale(1.1);
+
+        }
+
+    }
+
+}
+
+#arrow {
+
+    padding: 2%;
+
+}
+
+.table-wrapper {
+
+    position: absolute;
+    top: 0;
+
+    width: 100%;
+
+    .table{
+
+        font-family: "Roboto Light", sans-serif;
+
+        margin: 5vw;
+
+        position: relative;
+
+        height: 66vh;
+
+        display: flex;
+        flex-direction: column;
+
+        background-color: #DEDEDE;
+
+        .table-head {
+
+            font-family: "Roboto Regular", sans-serif;
+
+            display: flex;
+
+            background-color: #C4C4C4;
+
+            div {
+
+                display: flex;
+
+                flex: 4;
+
+                align-items: center;
+                justify-content: center;
+
+                width: 50%;
+                height: 7vh;
+
+            }
+
+            .id{
+                flex: 2;
+                font-weight: bold;
+            }
+
+        }
+
+        div[id*="table-body"] {
+
+            display: flex;
+            flex-direction: column;
+
+            overflow: auto;
+
+            flex: 1 1 auto;
+
+
+
+            /* ===== Scrollbar CSS ===== */
+            /* Firefox */
+            scrollbar-width: auto;
+            scrollbar-color: #c4c4c4 #DEDEDE;
+
+            /* Chrome, Edge, and Safari */
+            &::-webkit-scrollbar {
+                width: 18px;
+            }
+
+            &::-webkit-scrollbar-track {
+                background: #DEDEDE;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background-color: #c4c4c4;
+                border-radius: 0;
+                border: 0 solid #DEDEDE;
+            }
+
+            .row {
+
+
+
+                display: flex;
+
+                width: 100%;
+                height: 5vh;
+                min-height: 5vh;
+
+
+
+                input {
+
+                    &::selection {
+                        background-color: #2C2C2C;
+                        color: #DEDEDE;
+                    }
+
+                    flex: 4;
+
+                    cursor: pointer;
+
+                    text-align: center;
+
+                    width: 50%;
+
+                    border: 1px #ABABAB solid;
+                    outline: none;
+
+                    background-color: #DEDEDE;
+
+                    &:hover {
+                        background-color: #C4C4C4;
+                    }
+
+                    transition: .16s ease-in-out;
+
+                }
+
+                input.id{
+
+                    flex: 2;
+                }
+
+            }
+
+            .is-selected {
+
+                background-color: #C4C4C4 !important;
+
+            }
+
+        }
+
+        .table-footer {
+
+            flex: 0 1 3.5vh;
+
+            height: 3.5vh;
+
+            display: flex;
+
+            padding: 0.9vh;
+
+            background-color: #C4C4C4;
+
+            .search-wrapper {
+
+                width: 49%;
+
+                display: flex;
+
+                background-color: #DEDEDE;
+
+                input[id*="search-field"] {
+
+                    &::selection {
+                        background-color: #2C2C2C;
+                        color: #DEDEDE;
+                    }
+
+                    width: 100%;
+                    height: 100%;
+
+                    margin-left: 10px;
+
+                    font-family: "Roboto Light", sans-serif;
+
+                    background-color: transparent;
+                    border: none;
+                    outline: none;
+
+                    caret-color: #2C2C2C;
+
+                    .cursor {
+
+
+
+                    }
+                }
+
+                svg {
+
+                    flex: 0 1 1.5vw;
+
+                    margin-right: 10px;
+
+                    width: 100%;
+                    height: 100%;
+
+                    cursor: pointer;
+
+                    &:hover {
+
+                        fill: #ff2020;
+
+                    }
+                }
+
+            }
+
+            .button-wrapper{
+
+                display: flex;
+
+                justify-content: flex-end;
+
+                flex: 1 1 auto;
+
+                .add, .del {
+
+                    display: flex;
+
+                    justify-content: center;
+                    align-items: center;
+
+                    font-family: "Roboto Regular", sans-serif;
+                    font-size: 1.5rem;
+
+                    min-width: 18px;
+                    min-height: 18px;
+                    width: 2vw;
+                    margin-left: 0.5vw;
+
+                    cursor: not-allowed;
+                    pointer-events: none;
+
+                    background-color: #DEDEDE;
+
+                    color: #C2C2C2;
+
+                    transition: .16s ease-in-out;
+
+                }
+
+                .del.is-active, .add.is-active {
+
+                    color: black;
+
+                    pointer-events: all;
+
+                    cursor: pointer;
+
+                    &:hover {
+
+                        background-color: #ff2020;
+                        color: #DEDEDE;
+                    }
+
+                }
+
+                .del {
+
+                    font-size: 2.5rem;
+                    margin-right: 0.25vw;
+
+                }
+            }
+
+
+
+
+
+        }
+
+    }
+
+}
+
+
+
