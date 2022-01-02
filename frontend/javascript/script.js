@@ -1,11 +1,352 @@
-function showAPIPane(){
+var pathMappings = []
+var keyMappings = []
 
-    document.querySelector("#api-pane").setAttribute("is-visible", "true")
+var previousSelectedRow = undefined
+
+function showPane(paneIdQuery){
+
+    document.querySelector(paneIdQuery).classList.add("is-visible")
 
 }
 
-function hideAPIPane(event){
+function hideSelf(event){
 
-    event.target.setAttribute("is-visible", "false")
+    event.target.classList.remove("is-visible")
+
+}
+
+function toggleSelf(event) {
+
+
+    function getNumberOfSelectedItems(parentNode) {
+
+
+        let siblings = parentNode.children
+        let numberOfSelectedItems = 0
+
+        for (let i = 0; i < siblings.length; i++) {
+
+            let isVisible = siblings.item(i).classList.contains("is-selected")
+
+            if (isVisible) {
+
+                numberOfSelectedItems++
+
+            }
+        }
+
+        return numberOfSelectedItems
+
+    }
+
+    function getSelectedItem(parentNode) {
+
+        let siblings = parentNode.children
+
+        for (let i = 0; i < siblings.length; i++) {
+
+            let node = siblings.item(i)
+
+            if (node.classList.contains("is-selected")){
+
+                return node
+
+            }
+
+        }
+
+
+        return null
+
+
+    }
+
+
+
+    if (getNumberOfSelectedItems(event.target.parentNode) === 1){
+
+        let selectedItem = getSelectedItem(event.target.parentNode)
+
+        selectedItem.classList.remove("is-selected")
+
+        setMenuVisibility(selectedItem, false)
+
+        event.target.classList.add("is-selected")
+
+        setMenuVisibility(event.target, true)
+
+    }
+
+    // Reset delete button
+    document.querySelectorAll(".del").forEach(e => e.classList.remove("is-active"))
+
+
+}
+
+function setMenuVisibility (itemNode, visible) {
+
+
+    let id = itemNode.attributes.getNamedItem("id").value
+
+    let menu = document.querySelector(`div[id="${id.replace('item', 'menu')}"]`)
+
+    if (visible) {
+
+        menu.classList.add("is-visible")
+    }
+
+    else {
+        menu.classList.remove("is-visible")
+    }
+
+}
+
+function toggleRow(event) {
+
+    let children = event.target.parentElement.parentElement.children
+
+    // Deselect all elements
+    for (let i = 0; i < children.length; i++) {
+
+        let row = event.target.parentElement.parentElement.children[i]
+
+        for (let j = 0; j < row.children.length ; j++) {
+
+            let cell = row.children[j]
+
+            cell.classList.remove("is-selected")
+
+        }
+
+    }
+
+    // Select element
+
+    for (let i = 0; i < event.target.parentElement.children.length; i++) {
+
+        event.target.parentElement.children[i].classList.add("is-selected")
+
+    }
+
+
+    debugger
+
+    event.target.parentElement.parentElement.parentElement.querySelector(".del").classList.add("is-active")
+
+}
+
+function search(event) {
+
+    let table = event.target.parentElement.parentElement.previousElementSibling
+    let searchField = document.getElementById(event.target.id)
+    let value = searchField.value
+
+    let pattern = value !== undefined ? ".*" + value + ".*" : ".*"
+
+    let regex = new RegExp(pattern)
+
+    // Search in path mapping table
+    if (/^pm.*/.test(event.target.id)) {
+
+        let matchedPathMappings = []
+
+        for (let i = 0; i < pathMappings.length; i++) {
+
+            let objValue = JSON.stringify(pathMappings[i])
+                .replaceAll("{", "")
+                .replaceAll("}", "")
+                .replaceAll("\"", "")
+                .replaceAll(":", "")
+                .replaceAll(",", "")
+                .replaceAll(" ", "")
+
+            if (regex.test(objValue)) {
+
+                matchedPathMappings.push(pathMappings[i])
+
+            }
+
+        }
+
+        populateTableWithData(matchedPathMappings, table, "path-mapping")
+
+    }
+
+    // Search in key mapping table
+    else if (/^km.*/.test(event.target.id)) {
+
+        let matchedKeyMappings = []
+
+        for (let i = 0; i < keyMappings.length; i++) {
+
+            let objValue = JSON.stringify(keyMappings[i])
+                .replaceAll("{", "")
+                .replaceAll("}", "")
+                .replaceAll("\"", "")
+                .replaceAll(":", "")
+                .replaceAll(",", "")
+                .replaceAll(" ", "")
+
+            if (regex.test(objValue)) {
+
+                matchedKeyMappings.push(keyMappings[i])
+
+            }
+
+        }
+
+        populateTableWithData(matchedKeyMappings, table, "key-mapping")
+
+
+
+    }
+
+
+}
+
+function populateRateLimitMenu() {}
+
+function populatePathMappingsMenu() {
+
+    const url = new Request("http://localhost:8080/config/path-mappings")
+
+    pathMappings = []
+
+
+    fetch(url)
+        .then(response => {return response.json()})
+        .then(response => {
+
+            document.querySelector("#pm-table-body").innerHTML = ''
+
+            response.response.forEach(datum => {
+
+                let id = datum['id']
+                let path = datum['path']
+                let table = datum['table']
+
+                pathMappings.push({"id": id, "path": path, "table": table})
+
+            })
+
+            populateTableWithData(pathMappings, document.querySelector("#pm-table-body"), "path-mapping")
+
+
+        })
+
+
+
+}
+
+function populateTableWithData(data, element, dataType) {
+
+    element.innerHTML = ""
+
+    if (dataType.toLowerCase() === "path-mapping") {
+
+        for (let i = 0; i < data.length; i++) {
+
+            let datum = data[i]
+
+            let id = datum['id']
+            let path = datum['path']
+            let table = datum['table']
+
+
+
+            element.innerHTML += `
+    
+                    <div class="row">
+            
+                        <input class="id" readonly type="text" value="${id}" onfocus="toggleRow(event)"/>
+                        <input type="text" value="${path}" onfocus="toggleRow(event)"/>
+                        <input type="text" value="${table}" onfocus="toggleRow(event)"/>
+            
+                    </div>
+                
+                
+                `
+
+        }
+
+    } else if (dataType.toLowerCase() === "key-mapping") {
+
+        for (let i = 0; i < data.length; i++) {
+
+            let datum = data[i]
+
+            let id = datum['id']
+            let key = datum['key']
+            let column = datum['column']
+
+
+
+            element.innerHTML += `
+    
+                    <div class="row">
+            
+                        <input class="id" readonly type="text" value="${id}" onfocus="toggleRow(event)"/>
+                        <input type="text" value="${key}" onfocus="toggleRow(event)"/>
+                        <input type="text" value="${column}" onfocus="toggleRow(event)"/>
+            
+                    </div>
+                
+                
+                `
+
+        }
+
+    }
+
+
+
+
+
+
+
+}
+
+function populateKeyMappingsMenu() {
+
+    const url = new Request("http://localhost:8080/config/key-mappings")
+
+    keyMappings = []
+
+    fetch(url)
+        .then(response => {return response.json()})
+        .then(response => {
+
+            document.querySelector("#km-table-body").innerHTML = ''
+
+            response.response.forEach(datum => {
+
+                let id = datum['id']
+                let key = datum['key']
+                let column = datum['column']
+
+                keyMappings.push({"id": id, "key": key, "column": column})
+
+            })
+
+
+            populateTableWithData(keyMappings, document.querySelector("#km-table-body"), "key-mapping")
+
+        })
+
+
+
+}
+
+function populateBehaviorsMenu() {}
+
+function populateDBConfigMenu() {}
+
+function deleteEntry(event) {
+
+    let table = event.target.parentElement.parentElement.previousElementSibling
+
+    let row = previousSelectedRow
+
+
 
 }
