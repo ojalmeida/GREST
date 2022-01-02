@@ -88,13 +88,6 @@
 
                             <div id="pm-table-body">
 
-                                <div class="row">
-
-                                    <input class="id" readonly type="text" value="20001" onfocus="toggleRow(event)"/>
-                                    <input type="text" value="1st-path-here" onfocus="toggleRow(event)"/>
-                                    <input type="text" value="1st-table-here" onfocus="toggleRow(event)"/>
-
-                                </div>
 
                             </div>
 
@@ -112,7 +105,7 @@
                                         +
                                     </div>
 
-                                    <div class="del" onclick="deleteEntry(event)" >
+                                    <div class="del" onclick="deleteEntry(event, 'path-mappings');">
                                         -
                                     </div>
 
@@ -138,14 +131,6 @@
 
                             <div id="km-table-body">
 
-                                <div class="row">
-
-                                    <input class="id" readonly type="text" value="30001" onfocus="toggleRow(event)"/>
-                                    <input type="text" value="1st-key-here" onfocus="toggleRow(event)"/>
-                                    <input type="text" value="1st-column-here" onfocus="toggleRow(event)"/>
-
-                                </div>
-
                             </div>
 
                             <div class="table-footer">
@@ -162,7 +147,7 @@
                                         +
                                     </div>
 
-                                    <div class="del" onclick="deleteEntry(event)" >
+                                    <div class="del" onclick="deleteEntry(event, 'key-mappings');" >
                                         -
                                     </div>
 

@@ -129,8 +129,6 @@ function toggleRow(event) {
     }
 
 
-    debugger
-
     event.target.parentElement.parentElement.parentElement.querySelector(".del").classList.add("is-active")
 
 }
@@ -258,9 +256,9 @@ function populateTableWithData(data, element, dataType) {
     
                     <div class="row">
             
-                        <input class="id" readonly type="text" value="${id}" onfocus="toggleRow(event)"/>
-                        <input type="text" value="${path}" onfocus="toggleRow(event)"/>
-                        <input type="text" value="${table}" onfocus="toggleRow(event)"/>
+                        <input class="id-cell" readonly type="text" value="${id}" onfocus="toggleRow(event)"/>
+                        <input class="path-cell" type="text" value="${path}" onfocus="toggleRow(event)"/>
+                        <input class="table-cell" type="text" value="${table}" onfocus="toggleRow(event)"/>
             
                     </div>
                 
@@ -285,9 +283,9 @@ function populateTableWithData(data, element, dataType) {
     
                     <div class="row">
             
-                        <input class="id" readonly type="text" value="${id}" onfocus="toggleRow(event)"/>
-                        <input type="text" value="${key}" onfocus="toggleRow(event)"/>
-                        <input type="text" value="${column}" onfocus="toggleRow(event)"/>
+                        <input class="id-cell" readonly type="text" value="${id}" onfocus="toggleRow(event)"/>
+                        <input class="key-cell" type="text" value="${key}" onfocus="toggleRow(event)"/>
+                        <input class="column-cell" type="text" value="${column}" onfocus="toggleRow(event)"/>
             
                     </div>
                 
@@ -341,11 +339,143 @@ function populateBehaviorsMenu() {}
 
 function populateDBConfigMenu() {}
 
-function deleteEntry(event) {
+function deleteEntry(event, tableName) {
 
     let table = event.target.parentElement.parentElement.previousElementSibling
 
-    let row = previousSelectedRow
+    let selectedRows = table.querySelectorAll(".is-selected")
+
+    if (tableName.toLowerCase() === "path-mappings") {
+
+        let id = undefined
+        let path = undefined
+        let table = undefined
+
+        for (let i = 0; i < selectedRows.length; i++) {
+
+            for (let j = 0; j < selectedRows[i].classList.length; j++) {
+
+                switch (selectedRows[i].classList[j]) {
+
+                    case "id-cell":
+
+                        id = selectedRows[i].value
+                        break
+
+                    case "path-cell":
+
+                        path = selectedRows[i].value
+                        break
+
+                    case "table-cell":
+
+                        table = selectedRows[i].value
+                        break
+
+                }
+
+            }
+
+        }
+
+        let payload = {
+
+            "Must": {
+
+                "id": id,
+                "path": path,
+                "table": table
+
+            }
+
+        }
+
+        let url = "http://localhost:8080/config/path-mappings"
+
+        let request = new Request(url, {method: "DELETE", body: JSON.stringify(payload)})
+
+        fetch(request)
+            .then(res => {
+
+                if (res.status === 200) {
+
+
+                    populatePathMappingsMenu()
+
+                }
+
+
+            })
+
+    }
+
+    else if (tableName.toLowerCase() === "key-mappings") {
+
+        let id = undefined
+        let key = undefined
+        let column = undefined
+
+        for (let i = 0; i < selectedRows.length; i++) {
+
+            for (let j = 0; j < selectedRows[i].classList.length; j++) {
+
+                switch (selectedRows[i].classList[j]) {
+
+                    case "id-cell":
+
+                        id = selectedRows[i].value
+                        break
+
+                    case "key-cell":
+
+                        key = selectedRows[i].value
+                        break
+
+                    case "column-cell":
+
+                        column = selectedRows[i].value
+                        break
+
+                }
+
+            }
+
+        }
+
+        let payload = {
+
+            "Must": {
+
+                "id": id,
+                "key": key,
+                "column": column
+
+            }
+
+        }
+
+        let url = "http://localhost:8080/config/key-mappings"
+
+        let request = new Request(url, {method: "DELETE", body: JSON.stringify(payload)})
+
+        fetch(request)
+            .then(res => {
+
+                if (res.status === 200) {
+
+
+                    populateKeyMappingsMenu()
+
+                }
+
+
+            })
+
+
+    }
+
+
+
 
 
 
