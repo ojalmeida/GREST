@@ -155,7 +155,7 @@ func Delete(tableName string, filters map[string]string) error {
 
 	for k, v := range filters {
 
-		filterSlice = append(filterSlice, fmt.Sprintf("%s = '%s'", k, v))
+		filterSlice = append(filterSlice, fmt.Sprintf("`%s` = '%s'", k, v))
 
 	}
 
