@@ -92,6 +92,11 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 
+		log.Println(fmt.Sprintf("Request received from %s with method %s", request.RemoteAddr, request.Method))
+
+		writer.Header().Set("Content-Type", "application/json")
+		writer.Header().Set("Access-Control-Allow-Origin", "*")
+
 		switch request.Method {
 
 		case http.MethodGet:
@@ -102,10 +107,9 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			var responseStatus = http.StatusOK
 			var errors []string
 
-			writer.Header().Set("Content-Type", "application/json")
-			writer.Header().Set("Access-Control-Allow-Origin", "*")
-
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
+
+			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 			if err != nil {
 				errors = append(errors, "Impossible to read body")
@@ -116,7 +120,7 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 					_ = json.Unmarshal(rawReqPayload, &requestPayload)
 
-					fixedFilters, unknownFilters := correctData(behavior, requestPayload.Match)
+					fixedFilters, unknownFilters := correctData(behavior, requestPayload.Match, "inbound")
 
 					if unknownFilters == nil {
 
@@ -148,7 +152,7 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 			for i := range responseData {
 
-				correctedDatum, _ := correctData(behavior, responseData[i])
+				correctedDatum, _ := correctData(behavior, responseData[i], "outbound")
 
 				correctedResponse = append(correctedResponse, correctedDatum)
 
@@ -163,6 +167,9 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			writer.WriteHeader(responseStatus)
 			_, _ = writer.Write(response)
 
+			log.Println(fmt.Sprintf("Response status: %d", res.Status))
+			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+
 		case http.MethodPost:
 
 			var res response
@@ -174,6 +181,8 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
 
+			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
+
 			if err != nil {
 				errors = append(errors, "Impossible to read body")
 				responseStatus = http.StatusInternalServerError
@@ -183,7 +192,7 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 					_ = json.Unmarshal(rawReqPayload, &requestPayload)
 
-					fixedData, unknownKeys := correctData(behavior, requestPayload.Set)
+					fixedData, unknownKeys := correctData(behavior, requestPayload.Set, "inbound")
 
 					if unknownKeys == nil {
 
@@ -223,6 +232,9 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			writer.WriteHeader(res.Status)
 			_, _ = writer.Write(response)
 
+			log.Println(fmt.Sprintf("Response status: %d", res.Status))
+			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+
 		case http.MethodPut:
 
 			var res response
@@ -230,9 +242,9 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			var responseStatus = http.StatusOK
 			var errors []string
 
-			writer.Header().Set("Content-Type", "application/json")
-
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
+
+			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 			if err != nil {
 				errors = append(errors, "Impossible to read body")
@@ -243,8 +255,8 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 					_ = json.Unmarshal(rawReqPayload, &requestPayload)
 
-					fixedMustData, unknownKeys := correctData(behavior, requestPayload.Must)
-					fixedSetData, unknownKeys := correctData(behavior, requestPayload.Set)
+					fixedMustData, unknownKeys := correctData(behavior, requestPayload.Must, "inbound")
+					fixedSetData, unknownKeys := correctData(behavior, requestPayload.Set, "inbound")
 
 					if unknownKeys == nil {
 
@@ -284,15 +296,18 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			writer.WriteHeader(res.Status)
 			_, _ = writer.Write(response)
 
+			log.Println(fmt.Sprintf("Response status: %d", res.Status))
+			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+
 		case http.MethodDelete:
 			var res response
 			var requestPayload DeletePayload
 			var responseStatus = http.StatusOK
 			var errors []string
 
-			writer.Header().Set("Content-Type", "application/json")
-
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
+
+			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 			if err != nil {
 				errors = append(errors, "Impossible to read body")
@@ -303,7 +318,7 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 					_ = json.Unmarshal(rawReqPayload, &requestPayload)
 
-					fixedMustData, unknownKeys := correctData(behavior, requestPayload.Must)
+					fixedMustData, unknownKeys := correctData(behavior, requestPayload.Must, "inbound")
 
 					if unknownKeys == nil {
 
@@ -321,6 +336,8 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 							errors = append(errors, fmt.Sprintf("Invalid criteria: %s", unknownKeys[i]))
 
 						}
+
+						responseStatus = http.StatusBadRequest
 
 					}
 
@@ -342,6 +359,9 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			writer.WriteHeader(res.Status)
 			_, _ = writer.Write(response)
 
+			log.Println(fmt.Sprintf("Response status: %d", res.Status))
+			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+
 		case http.MethodHead:
 
 			var res response
@@ -349,9 +369,9 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			var responseStatus = http.StatusOK
 			var errors []string
 
-			writer.Header().Set("Content-Type", "application/json")
-
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
+
+			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 			if err != nil {
 				errors = append(errors, "Impossible to read body")
@@ -362,7 +382,7 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 					_ = json.Unmarshal(rawReqPayload, &requestPayload)
 
-					fixedFilters, unknownFilters := correctData(behavior, requestPayload.Match)
+					fixedFilters, unknownFilters := correctData(behavior, requestPayload.Match, "inbound")
 
 					if unknownFilters == nil {
 
@@ -393,6 +413,21 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			res.Status = responseStatus
 
 			writer.WriteHeader(res.Status)
+
+			log.Println(fmt.Sprintf("Response status: %d", res.Status))
+			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+
+		case http.MethodOptions:
+
+			var res response
+			var responseStatus = http.StatusOK
+
+			res.Status = responseStatus
+
+			writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, HEAD, OPTIONS")
+			writer.WriteHeader(res.Status)
+
+			log.Println(fmt.Sprintf("Response status: %d", res.Status))
 
 		default:
 			writer.WriteHeader(http.StatusMethodNotAllowed)
