@@ -1,8 +1,11 @@
 package server
 
-import "grest/db"
+import (
+	"grest/db"
+	"strings"
+)
 
-func correctData(behavior db.Behavior, data map[string]string) (correctedData map[string]string, unknownKeys []string) {
+func correctData(behavior db.Behavior, data map[string]string, direction string) (correctedData map[string]string, unknownKeys []string) {
 
 	correctedData = map[string]string{}
 
@@ -15,11 +18,24 @@ func correctData(behavior db.Behavior, data map[string]string) (correctedData ma
 			bKey := behavior.KeyMappings[i].Key
 			bColumn := behavior.KeyMappings[i].Column
 
-			if k == bColumn {
+			if strings.ToLower(direction) == "inbound" {
 
-				correctedData[bKey] = v
-				found = true
-				break
+				if k == bKey {
+
+					correctedData[bColumn] = v
+					found = true
+					break
+
+				}
+			} else if strings.ToLower(direction) == "outbound" {
+
+				if k == bColumn {
+
+					correctedData[bKey] = v
+					found = true
+					break
+
+				}
 
 			}
 
