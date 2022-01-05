@@ -222,7 +222,7 @@ header {
             color: #DEDEDE; }
           .table-wrapper .table div[id*="table-body"] .row input:hover {
             background-color: #C4C4C4; }
-        .table-wrapper .table div[id*="table-body"] .row input.id {
+        .table-wrapper .table div[id*="table-body"] .row input.id-cell {
           flex: 2; }
       .table-wrapper .table div[id*="table-body"] .is-selected {
         background-color: #C4C4C4 !important; }
