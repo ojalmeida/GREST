@@ -39,7 +39,7 @@ func Read(tableName string, filters map[string]string) (result []map[string]stri
 			for key, value := range filters {
 
 				if ColumnExists(tableName, key) {
-					filtersStrings = append(filtersStrings, fmt.Sprintf("%s = %s", key, value))
+					filtersStrings = append(filtersStrings, fmt.Sprintf("`%s` = '%s'", key, value))
 				} else {
 
 					return nil, ColumnDoesNotExistsError{}
@@ -127,7 +127,7 @@ func Update(tableName string, filters map[string]string, data map[string]string)
 
 	for k, v := range data {
 
-		dataSlice = append(dataSlice, fmt.Sprintf("%s = '%s'", k, v))
+		dataSlice = append(dataSlice, fmt.Sprintf("`%s` = '%s'", k, v))
 
 	}
 

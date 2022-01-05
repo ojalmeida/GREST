@@ -60,13 +60,7 @@ var requiredBehaviors = []Behavior{
 
 func init() {
 
-	_connection, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@%s(%s:%d)/grest", attributes.username, attributes.password, attributes.protocol, attributes.ip, attributes.port))
-
-	if err != nil {
-		panic(err.Error())
-	}
-
-	connection = _connection
+	openConnection()
 
 }
 
@@ -552,4 +546,16 @@ func PopulateConfigs() error {
 	}
 
 	return nil
+}
+
+func openConnection() {
+
+	_connection, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@%s(%s:%d)/grest", attributes.username, attributes.password, attributes.protocol, attributes.ip, attributes.port))
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	connection = _connection
+
 }
