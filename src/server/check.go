@@ -1,19 +1,14 @@
 package server
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 // isValidPayload checks if a request payload matches with the defined models of payload
 func isValidPayload(method string, payload string) bool {
 
 	switch method {
-
-	case "GET":
-
-		var testPayload GetPayload
-
-		err := json.Unmarshal([]byte(payload), &testPayload)
-
-		return (err == nil && testPayload.Match != nil) || payload == ""
 
 	case "POST":
 
@@ -42,4 +37,32 @@ func isValidPayload(method string, payload string) bool {
 	}
 
 	return true
+}
+
+func isValidQueryString(url string) bool {
+
+	urlFields := strings.Split(url, "?")
+
+	if len(urlFields) == 1 {
+		return true
+	}
+
+	queryString := urlFields[1]
+
+	params := strings.Split(queryString, "&")
+
+	for i := range params {
+
+		kv := strings.Split(params[i], "=")
+
+		if len(kv) != 2 {
+
+			return false
+
+		}
+
+	}
+
+	return true
+
 }

@@ -52,3 +52,28 @@ func correctData(behavior db.Behavior, data map[string]string, direction string)
 	return
 
 }
+
+func convertQueryStringToGETPayload(queryString string) GetPayload {
+
+	result := GetPayload{}
+	params := strings.Split(queryString, "&")
+
+	parametersMap := map[string]string{}
+
+	if queryString == "" {
+		return result
+	}
+
+	for _, param := range params {
+
+		kv := strings.Split(param, "=")
+
+		parametersMap[kv[0]] = kv[1]
+
+	}
+
+	result.Must = parametersMap
+
+	return result
+
+}

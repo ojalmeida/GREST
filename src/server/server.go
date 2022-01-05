@@ -18,7 +18,7 @@ type response struct {
 }
 
 type GetPayload struct {
-	Match map[string]string `json:"match"`
+	Must map[string]string `json:"match"`
 }
 
 type PostPayload struct {
@@ -107,45 +107,36 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			var responseStatus = http.StatusOK
 			var errors []string
 
-			rawReqPayload, err := ioutil.ReadAll(request.Body)
+			if isValidQueryString(request.URL.String()) {
 
-			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
+				requestPayload = convertQueryStringToGETPayload(request.URL.RawQuery)
 
-			if err != nil {
-				errors = append(errors, "Impossible to read body")
-				responseStatus = http.StatusInternalServerError
-			} else {
+				fixedFilters, unknownFilters := correctData(behavior, requestPayload.Must, "inbound")
 
-				if isValidPayload("GET", string(rawReqPayload)) {
+				if unknownFilters == nil {
 
-					_ = json.Unmarshal(rawReqPayload, &requestPayload)
+					var err error
 
-					fixedFilters, unknownFilters := correctData(behavior, requestPayload.Match, "inbound")
+					responseData, err = db.Read(behavior.PathMapping.Table, fixedFilters)
 
-					if unknownFilters == nil {
-
-						responseData, err = db.Read(behavior.PathMapping.Table, fixedFilters)
-
-						if err != nil {
-							errors = append(errors, err.Error())
-						}
-
-					} else {
-
-						for i := range unknownFilters {
-
-							errors = append(errors, fmt.Sprintf("Invalid criteria: %s", unknownFilters[i]))
-
-						}
-
+					if err != nil {
+						errors = append(errors, err.Error())
 					}
 
 				} else {
 
-					errors = append(errors, "Invalid payload")
-					responseStatus = http.StatusBadRequest
+					for i := range unknownFilters {
+
+						errors = append(errors, fmt.Sprintf("Invalid criteria: %s", unknownFilters[i]))
+
+					}
+
 				}
 
+			} else {
+
+				errors = append(errors, "Invalid payload")
+				responseStatus = http.StatusBadRequest
 			}
 
 			var correctedResponse []map[string]string
@@ -162,7 +153,7 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 			res.Status = responseStatus
 			res.Errors = errors
 
-			response, err := json.Marshal(res)
+			response, _ := json.Marshal(res)
 
 			writer.WriteHeader(responseStatus)
 			_, _ = writer.Write(response)
@@ -382,7 +373,7 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 					_ = json.Unmarshal(rawReqPayload, &requestPayload)
 
-					fixedFilters, unknownFilters := correctData(behavior, requestPayload.Match, "inbound")
+					fixedFilters, unknownFilters := correctData(behavior, requestPayload.Must, "inbound")
 
 					if unknownFilters == nil {
 
