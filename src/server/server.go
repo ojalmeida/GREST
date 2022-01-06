@@ -11,6 +11,11 @@ import (
 
 var behaviors []db.Behavior
 
+var mainBehavior db.Behavior
+
+var server http.Server
+var serverMux *http.ServeMux
+
 type response struct {
 	Status   int         `json:"status"`
 	Response interface{} `json:"response"`
@@ -36,6 +41,30 @@ type DeletePayload struct {
 
 // Checks the health of the application and loads all the data necessary to start the server
 func init() {
+
+	checkHealth()
+
+	mainKeyMappings := []db.KeyMapping{
+		{Key: "id", Column: "behavior_id"},
+		{Key: "path_mapping_id", Column: "path_mapping_id"},
+		{Key: "key_mapping_id", Column: "key_mapping_id"},
+	}
+	mainPathMapping := db.PathMapping{Path: "/config/behaviors", Table: "behaviors"}
+	mainBehavior.PathMapping = mainPathMapping
+	mainBehavior.KeyMappings = mainKeyMappings
+
+}
+
+// Reload request handlers
+func reloadServer() {
+
+	checkHealth()
+	defineHandlers()
+
+}
+
+// Checks pre-requisites to start server
+func checkHealth() {
 
 	ok, missingPathMappings, missingKeyMappings, missingBehaviors := db.CheckConfigs()
 
@@ -70,20 +99,33 @@ func init() {
 // StartServer applies all behaviors and starts to listen for requests
 func StartServer() {
 
+	defineHandlers()
+
+	server = http.Server{Addr: ":8080", Handler: serverMux}
+
+	log.Fatal(server.ListenAndServe())
+
+}
+
+// Transform each behavior in a function that process requests
+func defineHandlers() {
+
+	serverMux = http.NewServeMux()
+
 	for _, behavior := range behaviors {
 
-		setHandler(behavior)
+		setHandler(behavior, serverMux)
 
 	}
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	server.Handler = serverMux
 
 }
 
 // setHandler applies a request handling based on given behavior object.
-func setHandler(behavior db.Behavior) {
+func setHandler(behavior db.Behavior, serverMux *http.ServeMux) {
 
-	http.HandleFunc(behavior.PathMapping.Path, handlerFactory(behavior))
+	serverMux.HandleFunc(behavior.PathMapping.Path, handlerFactory(behavior))
 }
 
 // handlerFactory returns a request handler based on given behavior. This handler determines how a request will be handled
@@ -92,10 +134,16 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 
+		var needReload = float32(0)
+
 		log.Println(fmt.Sprintf("Request received from %s with method %s", request.RemoteAddr, request.Method))
 
 		writer.Header().Set("Content-Type", "application/json")
 		writer.Header().Set("Access-Control-Allow-Origin", "*")
+
+		if db.CompareBehaviors(behavior, mainBehavior) {
+			needReload += float32(0.5)
+		}
 
 		switch request.Method {
 
@@ -192,6 +240,8 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 						if err != nil {
 							errors = append(errors, err.Error())
 							responseStatus = http.StatusInternalServerError
+						} else {
+							needReload += float32(0.5)
 						}
 
 					} else {
@@ -256,6 +306,8 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 						if err != nil {
 							errors = append(errors, err.Error())
 							responseStatus = http.StatusInternalServerError
+						} else {
+							needReload += float32(0.5)
 						}
 
 					} else {
@@ -318,6 +370,8 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 						if err != nil {
 							errors = append(errors, err.Error())
 							responseStatus = http.StatusInternalServerError
+						} else {
+							needReload += float32(0.5)
 						}
 
 					} else {
@@ -422,6 +476,10 @@ func handlerFactory(behavior db.Behavior) func(writer http.ResponseWriter, reque
 
 		default:
 			writer.WriteHeader(http.StatusMethodNotAllowed)
+		}
+
+		if needReload == 1 {
+			defer reloadServer()
 		}
 
 	}
