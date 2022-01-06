@@ -4,7 +4,6 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"reflect"
 	"strconv"
 	"strings"
 )
@@ -342,9 +341,10 @@ func CheckConfigs() (ok bool, missingPathMappings []PathMapping, missingKeyMappi
 
 		for j := range currentPathMappings {
 
-			if reflect.DeepEqual(currentPathMappings[j], pathMapping) {
+			if ComparePathMappings(currentPathMappings[j], pathMapping) {
 
 				contains = true
+				break
 
 			}
 
@@ -366,9 +366,10 @@ func CheckConfigs() (ok bool, missingPathMappings []PathMapping, missingKeyMappi
 
 		for j := range currentKeyMappings {
 
-			if reflect.DeepEqual(currentKeyMappings[j], keyMapping) {
+			if CompareKeyMappings(currentKeyMappings[j], keyMapping) {
 
 				contains = true
+				break
 
 			}
 
@@ -390,9 +391,10 @@ func CheckConfigs() (ok bool, missingPathMappings []PathMapping, missingKeyMappi
 
 		for j := range currentBehaviors {
 
-			if reflect.DeepEqual(currentBehaviors[j], behavior) {
+			if CompareBehaviors(currentBehaviors[j], behavior) {
 
 				contains = true
+				break
 
 			}
 
