@@ -68,7 +68,7 @@ The key mapping above says: Hey GREST! Clients need to pass this `name` when the
 
 ### Usage
 
-Having in hands an active database, maybe containing something like this:
+Having you in hands an active database, maybe containing something like this:
 
 *Employees*
 
@@ -149,7 +149,7 @@ Payload:
 {
   "Set": {
     "path_mapping_id": "101",
-    "keu_mapping_id": "201"
+    "key_mapping_id": "201"
   }
 }
 
