@@ -78,32 +78,6 @@ type PathMapping struct {
 	Table string
 }
 
-func createPrerequisites() error {
-
-	_, err := connection.Query("CREATE TABLE IF NOT EXISTS path_mappings (path_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path VARCHAR(255) NOT NULL, `table` VARCHAR(255) NOT NULL) AUTO_INCREMENT=20000;")
-
-	if err != nil {
-
-		return err
-	}
-
-	_, err = connection.Query("CREATE TABLE IF NOT EXISTS key_mappings (key_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , `key` VARCHAR(255) NOT NULL, `column` VARCHAR(255) NOT NULL) AUTO_INCREMENT=30000;")
-
-	if err != nil {
-
-		return err
-	}
-
-	_, err = connection.Query("CREATE TABLE IF NOT EXISTS behaviors (behavior_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path_mapping_id INT NOT NULL, key_mapping_id INT NOT NULL) AUTO_INCREMENT=10000;")
-
-	if err != nil {
-
-		return err
-	}
-
-	return nil
-}
-
 // getPathMapping returns a PathMapping object present in the database based on given id
 func getPathMapping(id int) (PathMapping, error) {
 

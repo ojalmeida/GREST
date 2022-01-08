@@ -60,3 +60,111 @@ func parseInterfacesToMapSlice(unparsedData []map[string]interface{}) (parsedDat
 	return
 
 }
+
+func createPrerequisites() (err error) {
+
+	transaction, err := connection.Begin()
+	if err != nil {
+		return
+	}
+
+	statement1, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS path_mappings (path_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path VARCHAR(255) NOT NULL, `table` VARCHAR(255) NOT NULL) AUTO_INCREMENT=20000;")
+	statement2, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS key_mappings (key_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , `key` VARCHAR(255) NOT NULL, `column` VARCHAR(255) NOT NULL) AUTO_INCREMENT=30000;")
+	statement3, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS behaviors (behavior_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path_mapping_id INT NOT NULL, key_mapping_id INT NOT NULL) AUTO_INCREMENT=10000;")
+
+	_, err = statement1.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return
+		}
+
+	}
+
+	_, err = statement2.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return
+		}
+
+	}
+
+	_, err = statement3.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return
+		}
+
+	}
+
+	err = transaction.Commit()
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func FactoryReset() (err error) {
+
+	transaction, err := connection.Begin()
+
+	if err != nil {
+		return err
+	}
+
+	statement1, err := transaction.Prepare("DROP TABLE `behaviors`;")
+	statement2, err := transaction.Prepare("DROP TABLE `path_mappings`;")
+	statement3, err := transaction.Prepare("DROP TABLE `key_mappings`;")
+
+	_, err = statement1.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	_, err = statement2.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	_, err = statement3.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return
+		}
+
+		return
+	}
+
+	err = transaction.Commit()
+	if err != nil {
+		return
+	}
+
+	err = createPrerequisites()
+	if err != nil {
+		return
+	}
+
+	return
+
+}
