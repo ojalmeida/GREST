@@ -1,6 +1,6 @@
 package main
 
-import "grest/server"
+import "github.com/ojalmeida/GREST/src/server"
 
 func main() {
 

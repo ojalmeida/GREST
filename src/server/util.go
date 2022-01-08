@@ -1,7 +1,7 @@
 package server
 
 import (
-	"grest/db"
+	"github.com/ojalmeida/GREST/src/db"
 	"strings"
 )
 

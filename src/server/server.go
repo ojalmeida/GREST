@@ -3,7 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"grest/db"
+	"github.com/ojalmeida/GREST/src/db"
 	"io/ioutil"
 	"log"
 	"net/http"
