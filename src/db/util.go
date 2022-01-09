@@ -61,11 +61,11 @@ func parseInterfacesToMapSlice(unparsedData []map[string]interface{}) (parsedDat
 
 }
 
-func createPrerequisites() (err error) {
+func createPrerequisites() error {
 
 	transaction, err := connection.Begin()
 	if err != nil {
-		return
+		return err
 	}
 
 	statement1, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS path_mappings (path_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path VARCHAR(255) NOT NULL, `table` VARCHAR(255) NOT NULL) AUTO_INCREMENT=20000;")
@@ -77,7 +77,7 @@ func createPrerequisites() (err error) {
 
 		err := transaction.Rollback()
 		if err != nil {
-			return
+			return err
 		}
 
 	}
@@ -87,7 +87,7 @@ func createPrerequisites() (err error) {
 
 		err := transaction.Rollback()
 		if err != nil {
-			return
+			return err
 		}
 
 	}
@@ -97,17 +97,17 @@ func createPrerequisites() (err error) {
 
 		err := transaction.Rollback()
 		if err != nil {
-			return
+			return err
 		}
 
 	}
 
 	err = transaction.Commit()
 	if err != nil {
-		return
+		return err
 	}
 
-	return
+	return err
 }
 
 func FactoryReset() (err error) {
@@ -127,10 +127,10 @@ func FactoryReset() (err error) {
 
 		err := transaction.Rollback()
 		if err != nil {
-			return
+			return err
 		}
 
-		return
+		return err
 	}
 
 	_, err = statement2.Exec()
@@ -138,10 +138,10 @@ func FactoryReset() (err error) {
 
 		err := transaction.Rollback()
 		if err != nil {
-			return
+			return err
 		}
 
-		return
+		return err
 	}
 
 	_, err = statement3.Exec()
@@ -149,22 +149,22 @@ func FactoryReset() (err error) {
 
 		err := transaction.Rollback()
 		if err != nil {
-			return
+			return err
 		}
 
-		return
+		return err
 	}
 
 	err = transaction.Commit()
 	if err != nil {
-		return
+		return err
 	}
 
 	err = createPrerequisites()
 	if err != nil {
-		return
+		return err
 	}
 
-	return
+	return nil
 
 }
