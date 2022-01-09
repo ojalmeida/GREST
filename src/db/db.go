@@ -3,7 +3,6 @@ package db
 import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"github.com/ojalmeida/GREST/src/db/connection"
 )
 
 var Conn *sqlx.DB
@@ -47,6 +46,6 @@ var requiredBehaviors = []Behavior{
 
 func init() {
 
-	Conn = connection.GetConnection()
+	Conn = GetConnection()
 
 }

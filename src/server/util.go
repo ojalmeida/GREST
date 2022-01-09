@@ -1,9 +1,8 @@
-package handle
+package server
 
 import (
 	"encoding/json"
 	"github.com/ojalmeida/GREST/src/db"
-	"github.com/ojalmeida/GREST/src/server/data"
 	"strings"
 )
 
@@ -55,9 +54,9 @@ func correctData(behavior db.Behavior, data map[string]string, direction string)
 
 }
 
-func toGetPayload(queryString string) data.GetPayload {
+func toGetPayload(queryString string) GetPayload {
 
-	result := data.GetPayload{}
+	result := GetPayload{}
 	params := strings.Split(queryString, "&")
 
 	parametersMap := map[string]string{}
@@ -86,7 +85,7 @@ func isValidPayload(method string, payload string) bool {
 
 	case "POST":
 
-		var testPayload data.PostPayload
+		var testPayload PostPayload
 
 		err := json.Unmarshal([]byte(payload), &testPayload)
 
@@ -94,7 +93,7 @@ func isValidPayload(method string, payload string) bool {
 
 	case "PUT":
 
-		var testPayload data.PutPayload
+		var testPayload PutPayload
 
 		err := json.Unmarshal([]byte(payload), &testPayload)
 
@@ -102,7 +101,7 @@ func isValidPayload(method string, payload string) bool {
 
 	case "DELETE":
 
-		var testPayload data.DeletePayload
+		var testPayload DeletePayload
 
 		err := json.Unmarshal([]byte(payload), &testPayload)
 

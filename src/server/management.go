@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/ojalmeida/GREST/src/db"
-	"github.com/ojalmeida/GREST/src/server/handle"
 	"log"
 	"net/http"
 )
@@ -14,7 +13,7 @@ func setServerMux() {
 
 	for _, behavior := range behaviors {
 
-		serverMux.HandleFunc(behavior.PathMapping.Path, handle.GetHandler(behavior))
+		serverMux.HandleFunc(behavior.PathMapping.Path, GetHandler(behavior))
 
 	}
 

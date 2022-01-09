@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"github.com/ojalmeida/GREST/src/db/operation"
 	"strconv"
 	"strings"
 )
@@ -125,7 +124,7 @@ func getPathMapping(id int) (PathMapping, error) {
 
 	var pathMapping PathMapping
 
-	result, err := operation.Read("path_mappings", map[string]string{"path_mapping_id": strconv.Itoa(id)})
+	result, err := Read("path_mappings", map[string]string{"path_mapping_id": strconv.Itoa(id)})
 
 	if err != nil {
 		return PathMapping{}, err
@@ -147,7 +146,7 @@ func getKeyMapping(id int) (KeyMapping, error) {
 
 	var keyMapping KeyMapping
 
-	result, err := operation.Read("key_mappings", map[string]string{"key_mapping_id": strconv.Itoa(id)})
+	result, err := Read("key_mappings", map[string]string{"key_mapping_id": strconv.Itoa(id)})
 
 	if err != nil {
 		return KeyMapping{}, err

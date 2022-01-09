@@ -1,12 +1,9 @@
-package handle
+package server
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/ojalmeida/GREST/src/db"
-	"github.com/ojalmeida/GREST/src/db/operation"
-	"github.com/ojalmeida/GREST/src/server"
-	"github.com/ojalmeida/GREST/src/server/data"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -25,7 +22,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 		writer.Header().Set("Content-Type", "application/json")
 		writer.Header().Set("Access-Control-Allow-Origin", "*")
 
-		if db.CompareBehaviors(behavior, server.MainBehavior) {
+		if db.CompareBehaviors(behavior, MainBehavior) {
 			needReload += float32(0.5)
 		}
 
@@ -33,9 +30,9 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 		case http.MethodGet:
 
-			var res data.Response
+			var res Response
 			var responseData []map[string]string
-			var requestPayload data.GetPayload
+			var requestPayload GetPayload
 			var responseStatus = http.StatusOK
 			var errors []string
 
@@ -49,7 +46,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					var err error
 
-					responseData, err = operation.Read(behavior.PathMapping.Table, fixedFilters)
+					responseData, err = db.Read(behavior.PathMapping.Table, fixedFilters)
 
 					if err != nil {
 						errors = append(errors, err.Error())
@@ -95,8 +92,8 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 		case http.MethodPost:
 
-			var res data.Response
-			var requestPayload data.PostPayload
+			var res Response
+			var requestPayload PostPayload
 			var responseStatus = http.StatusOK
 			var errors []string
 
@@ -119,7 +116,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					if unknownKeys == nil {
 
-						err = operation.Create(behavior.PathMapping.Table, fixedData)
+						err = db.Create(behavior.PathMapping.Table, fixedData)
 
 						if err != nil {
 							errors = append(errors, err.Error())
@@ -162,8 +159,8 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 		case http.MethodPut:
 
-			var res data.Response
-			var requestPayload data.PutPayload
+			var res Response
+			var requestPayload PutPayload
 			var responseStatus = http.StatusOK
 			var errors []string
 
@@ -185,7 +182,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					if unknownKeys == nil {
 
-						err = operation.Update(behavior.PathMapping.Table, fixedMustData, fixedSetData)
+						err = db.Update(behavior.PathMapping.Table, fixedMustData, fixedSetData)
 
 						if err != nil {
 							errors = append(errors, err.Error())
@@ -227,8 +224,8 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
 
 		case http.MethodDelete:
-			var res data.Response
-			var requestPayload data.DeletePayload
+			var res Response
+			var requestPayload DeletePayload
 			var responseStatus = http.StatusOK
 			var errors []string
 
@@ -249,7 +246,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					if unknownKeys == nil {
 
-						err = operation.Delete(behavior.PathMapping.Table, fixedMustData)
+						err = db.Delete(behavior.PathMapping.Table, fixedMustData)
 
 						if err != nil {
 							errors = append(errors, err.Error())
@@ -293,8 +290,8 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 		case http.MethodHead:
 
-			var res data.Response
-			var requestPayload data.GetPayload
+			var res Response
+			var requestPayload GetPayload
 			var responseStatus = http.StatusOK
 			var errors []string
 
@@ -315,7 +312,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					if unknownFilters == nil {
 
-						_, err = operation.Read(behavior.PathMapping.Table, fixedFilters)
+						_, err = db.Read(behavior.PathMapping.Table, fixedFilters)
 
 						if err != nil {
 							errors = append(errors, err.Error())
@@ -348,7 +345,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 		case http.MethodOptions:
 
-			var res data.Response
+			var res Response
 			var responseStatus = http.StatusOK
 
 			res.Status = responseStatus
@@ -363,7 +360,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 		}
 
 		if needReload == 1 {
-			defer server.ReloadServer()
+			defer ReloadServer()
 		}
 
 	}
