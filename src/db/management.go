@@ -2,80 +2,117 @@ package db
 
 import (
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
+	"github.com/ojalmeida/GREST/src/db/operation"
 	"strconv"
 	"strings"
 )
 
-type databaseAttributes struct {
-	username string
-	password string
-	ip       string
-	protocol string
-	port     uint16
+func createPrerequisites() (err error) {
+
+	transaction, err := Conn.Begin()
+	if err != nil {
+		return
+	}
+
+	statement1, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS path_mappings (path_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path VARCHAR(255) NOT NULL, `table` VARCHAR(255) NOT NULL) AUTO_INCREMENT=20000;")
+	statement2, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS key_mappings (key_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , `key` VARCHAR(255) NOT NULL, `column` VARCHAR(255) NOT NULL) AUTO_INCREMENT=30000;")
+	statement3, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS behaviors (behavior_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path_mapping_id INT NOT NULL, key_mapping_id INT NOT NULL) AUTO_INCREMENT=10000;")
+
+	_, err = statement1.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return err
+		}
+
+	}
+
+	_, err = statement2.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return err
+		}
+
+	}
+
+	_, err = statement3.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return err
+		}
+
+	}
+
+	err = transaction.Commit()
+	if err != nil {
+		return
+	}
+
+	return
 }
 
-var attributes = databaseAttributes{"root", "root", "127.0.0.1", "tcp", 3306}
+func FactoryReset() (err error) {
 
-var connection *sqlx.DB
+	transaction, err := Conn.Begin()
 
-var requiredPathMappings = []PathMapping{
-	{Path: "/config/path-mappings", Table: "path_mappings"},
-	{Path: "/config/key-mappings", Table: "key_mappings"},
-	{Path: "/config/behaviors", Table: "behaviors"},
-}
-var requiredKeyMappings = []KeyMapping{
-	{Key: "id", Column: "path_mapping_id"},
-	{Key: "id", Column: "key_mapping_id"},
-	{Key: "id", Column: "behavior_id"},
-	{Key: "key", Column: "key"},
-	{Key: "column", Column: "column"},
-	{Key: "path", Column: "path"},
-	{Key: "table", Column: "table"},
-	{Key: "path_mapping_id", Column: "path_mapping_id"},
-	{Key: "key_mapping_id", Column: "key_mapping_id"},
-}
-var requiredBehaviors = []Behavior{
-	{PathMapping: PathMapping{Path: "/config/path-mappings", Table: "path_mappings"}, KeyMappings: []KeyMapping{
-		{Key: "id", Column: "path_mapping_id"},
-		{Key: "path", Column: "path"},
-		{Key: "table", Column: "table"},
-	},
-	},
-	{PathMapping: PathMapping{Path: "/config/key-mappings", Table: "key_mappings"}, KeyMappings: []KeyMapping{
-		{Key: "id", Column: "key_mapping_id"},
-		{Key: "key", Column: "key"},
-		{Key: "column", Column: "column"},
-	},
-	},
-	{PathMapping: PathMapping{Path: "/config/behaviors", Table: "behaviors"}, KeyMappings: []KeyMapping{
-		{Key: "id", Column: "behavior_id"},
-		{Key: "path_mapping_id", Column: "path_mapping_id"},
-		{Key: "key_mapping_id", Column: "key_mapping_id"},
-	},
-	},
-}
+	if err != nil {
+		return err
+	}
 
-func init() {
+	statement1, err := transaction.Prepare("DROP TABLE `behaviors`;")
+	statement2, err := transaction.Prepare("DROP TABLE `path_mappings`;")
+	statement3, err := transaction.Prepare("DROP TABLE `key_mappings`;")
 
-	openConnection()
+	_, err = statement1.Exec()
+	if err != nil {
 
-}
+		err := transaction.Rollback()
+		if err != nil {
+			return err
+		}
 
-type Behavior struct {
-	PathMapping PathMapping
-	KeyMappings []KeyMapping
-}
+		return err
+	}
 
-type KeyMapping struct {
-	Key    string
-	Column string
-}
+	_, err = statement2.Exec()
+	if err != nil {
 
-type PathMapping struct {
-	Path  string
-	Table string
+		err := transaction.Rollback()
+		if err != nil {
+			return err
+		}
+
+		return err
+	}
+
+	_, err = statement3.Exec()
+	if err != nil {
+
+		err := transaction.Rollback()
+		if err != nil {
+			return err
+		}
+
+		return err
+	}
+
+	err = transaction.Commit()
+	if err != nil {
+		return err
+	}
+
+	err = createPrerequisites()
+	if err != nil {
+		return err
+	}
+
+	return
+
 }
 
 // getPathMapping returns a PathMapping object present in the database based on given id
@@ -88,7 +125,7 @@ func getPathMapping(id int) (PathMapping, error) {
 
 	var pathMapping PathMapping
 
-	result, err := Read("path_mappings", map[string]string{"path_mapping_id": strconv.Itoa(id)})
+	result, err := operation.Read("path_mappings", map[string]string{"path_mapping_id": strconv.Itoa(id)})
 
 	if err != nil {
 		return PathMapping{}, err
@@ -110,7 +147,7 @@ func getKeyMapping(id int) (KeyMapping, error) {
 
 	var keyMapping KeyMapping
 
-	result, err := Read("key_mappings", map[string]string{"key_mapping_id": strconv.Itoa(id)})
+	result, err := operation.Read("key_mappings", map[string]string{"key_mapping_id": strconv.Itoa(id)})
 
 	if err != nil {
 		return KeyMapping{}, err
@@ -127,7 +164,7 @@ func GetBehaviors() ([]Behavior, error) {
 
 	var behaviors []Behavior
 
-	rows, _ := connection.Query("SELECT path_mapping_id FROM behaviors group by path_mapping_id;")
+	rows, _ := Conn.Query("SELECT path_mapping_id FROM behaviors group by path_mapping_id;")
 
 	if rows != nil {
 
@@ -151,7 +188,7 @@ func GetBehaviors() ([]Behavior, error) {
 
 		for i := range pathMappingIds {
 
-			rows, err := connection.Queryx("SELECT b.key_mapping_id FROM behaviors b INNER JOIN key_mappings km ON b.key_mapping_id = km.key_mapping_id WHERE b.path_mapping_id = ?", pathMappingIds[i])
+			rows, err := Conn.Queryx("SELECT b.key_mapping_id FROM behaviors b INNER JOIN key_mappings km ON b.key_mapping_id = km.key_mapping_id WHERE b.path_mapping_id = ?", pathMappingIds[i])
 
 			if err != nil {
 				return []Behavior{}, err
@@ -217,7 +254,7 @@ func getPathMappings() ([]PathMapping, error) {
 		table string
 	)
 
-	rows, err := connection.Query("SELECT path, `table` FROM path_mappings;")
+	rows, err := Conn.Query("SELECT path, `table` FROM path_mappings;")
 
 	if err != nil {
 		return []PathMapping{}, err
@@ -255,7 +292,7 @@ func getKeyMappings() ([]KeyMapping, error) {
 		column string
 	)
 
-	rows, err := connection.Query("SELECT `key`, `column`  FROM key_mappings;")
+	rows, err := Conn.Query("SELECT `key`, `column`  FROM key_mappings;")
 
 	if err != nil {
 		return []KeyMapping{}, err
@@ -397,8 +434,11 @@ func PopulateConfigs() error {
 	// PathMappings
 	{
 		pathMappingsQuery := "INSERT INTO path_mappings VALUES "
+
 		ID := 20000
+
 		var pathMappingsThatWillBeInserted []string
+
 		for i := range requiredPathMappings {
 
 			path := requiredPathMappings[i].Path
@@ -408,8 +448,10 @@ func PopulateConfigs() error {
 
 			ID += 1
 		}
+
 		pathMappingsQuery += strings.Join(pathMappingsThatWillBeInserted, ",")
-		_, err = connection.Query(pathMappingsQuery)
+
+		_, err = Conn.Query(pathMappingsQuery)
 		if err != nil {
 			return err
 		}
@@ -418,8 +460,11 @@ func PopulateConfigs() error {
 	// KeyMappings
 	{
 		keyMappingsQuery := "INSERT INTO key_mappings VALUES "
+
 		ID := 30000
+
 		var keyMappingsThatWillBeInserted []string
+
 		for i := range requiredKeyMappings {
 
 			key := requiredKeyMappings[i].Key
@@ -428,8 +473,10 @@ func PopulateConfigs() error {
 			keyMappingsThatWillBeInserted = append(keyMappingsThatWillBeInserted, fmt.Sprintf("(%d, '%s', '%s')", ID, key, column))
 			ID += 1
 		}
+
 		keyMappingsQuery += strings.Join(keyMappingsThatWillBeInserted, ", ")
-		_, err = connection.Query(keyMappingsQuery)
+
+		_, err = Conn.Query(keyMappingsQuery)
 		if err != nil {
 			return err
 		}
@@ -438,7 +485,9 @@ func PopulateConfigs() error {
 	// Behaviors
 	{
 		behaviorsQuery := "INSERT INTO behaviors VALUES "
+
 		ID := 10000
+
 		for i := range requiredBehaviors {
 
 			pathMapping := requiredBehaviors[i].PathMapping
@@ -448,15 +497,13 @@ func PopulateConfigs() error {
 			var pathMappingsID int
 			var keyMappingIDs []int
 
-			rows, err := connection.Query("SELECT path_mapping_id FROM path_mappings WHERE path = ? AND `table` = ?", pathMapping.Path, pathMapping.Table)
+			rows, err := Conn.Query("SELECT path_mapping_id FROM path_mappings WHERE path = ? AND `table` = ?", pathMapping.Path, pathMapping.Table)
 
 			if err != nil {
 
 				panic(err.Error())
 
 			}
-
-			defer rows.Close()
 
 			for rows.Next() {
 
@@ -477,15 +524,13 @@ func PopulateConfigs() error {
 
 				var keyMappingID int
 
-				rows, err := connection.Query("SELECT key_mapping_id FROM key_mappings WHERE `key` = ? AND `column` = ?", key, column)
+				rows, err := Conn.Query("SELECT key_mapping_id FROM key_mappings WHERE `key` = ? AND `column` = ?", key, column)
 
 				if err != nil {
 
 					panic(err.Error())
 
 				}
-
-				defer rows.Close()
 
 				for rows.Next() {
 
@@ -501,6 +546,8 @@ func PopulateConfigs() error {
 
 				keyMappingIDs = append(keyMappingIDs, keyMappingID)
 
+				rows.Close()
+
 			}
 
 			for j := range keyMappingIDs {
@@ -513,25 +560,15 @@ func PopulateConfigs() error {
 
 			behaviorsQuery += strings.Join(behaviorsThatWillBeInserted, ", ")
 
+			rows.Close()
+
 		}
 
-		_, err = connection.Query(behaviorsQuery)
+		_, err = Conn.Query(behaviorsQuery)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func openConnection() {
-
-	_connection, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@%s(%s:%d)/grest", attributes.username, attributes.password, attributes.protocol, attributes.ip, attributes.port))
-
-	if err != nil {
-		panic(err.Error())
-	}
-
-	connection = _connection
-
 }

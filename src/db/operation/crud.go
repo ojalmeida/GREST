@@ -1,7 +1,8 @@
-package db
+package operation
 
 import (
 	"fmt"
+	"github.com/ojalmeida/GREST/src/db"
 	"strings"
 )
 
@@ -23,10 +24,32 @@ func (c ColumnDoesNotExistsError) Error() string {
 	return "Column does not exists"
 }
 
+// Create inserts data in the database returning an error if it occurs
+func Create(tableName string, data map[string]string) error {
+
+	query := fmt.Sprintf("INSERT INTO %s ", tableName)
+	var columns []string
+	var values []string
+
+	for k, v := range data {
+
+		columns = append(columns, fmt.Sprintf("`%s`", k))
+		values = append(values, fmt.Sprintf("'%s'", v))
+
+	}
+
+	query += fmt.Sprintf("( %s ) VALUES ( %s )", strings.Join(columns, ", "), strings.Join(values, ", "))
+
+	_, err := db.Conn.Query(query)
+
+	return err
+
+}
+
 // Read returns an array of maps containing the results retrieved from database and an error, if it occurs
 func Read(tableName string, filters map[string]string) (result []map[string]string, err error) {
 
-	if TableExists(tableName) {
+	if db.TableExists(tableName) {
 
 		var unparsedResults []map[string]interface{}
 		var query string
@@ -38,7 +61,7 @@ func Read(tableName string, filters map[string]string) (result []map[string]stri
 
 			for key, value := range filters {
 
-				if ColumnExists(tableName, key) {
+				if db.ColumnExists(tableName, key) {
 					filtersStrings = append(filtersStrings, fmt.Sprintf("`%s` = '%s'", key, value))
 				} else {
 
@@ -53,7 +76,7 @@ func Read(tableName string, filters map[string]string) (result []map[string]stri
 			query += fmt.Sprintf("SELECT * FROM %s ", tableName)
 		}
 
-		rows, err := connection.Queryx(query)
+		rows, err := db.Conn.Queryx(query)
 		defer rows.Close()
 
 		if err != nil {
@@ -80,7 +103,7 @@ func Read(tableName string, filters map[string]string) (result []map[string]stri
 
 		}
 
-		result = parseInterfacesToMapSlice(unparsedResults)
+		result = db.ToMapSlice(unparsedResults)
 
 		return result, err
 
@@ -92,28 +115,6 @@ func Read(tableName string, filters map[string]string) (result []map[string]stri
 
 		return
 	}
-
-}
-
-// Create inserts data in the database returning an error if it occurs
-func Create(tableName string, data map[string]string) error {
-
-	query := fmt.Sprintf("INSERT INTO %s ", tableName)
-	var columns []string
-	var values []string
-
-	for k, v := range data {
-
-		columns = append(columns, fmt.Sprintf("`%s`", k))
-		values = append(values, fmt.Sprintf("'%s'", v))
-
-	}
-
-	query += fmt.Sprintf("( %s ) VALUES ( %s )", strings.Join(columns, ", "), strings.Join(values, ", "))
-
-	_, err := connection.Query(query)
-
-	return err
 
 }
 
@@ -141,7 +142,7 @@ func Update(tableName string, filters map[string]string, data map[string]string)
 
 	query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, ", "))
 
-	_, err := connection.Query(query)
+	_, err := db.Conn.Query(query)
 
 	return err
 }
@@ -161,7 +162,7 @@ func Delete(tableName string, filters map[string]string) error {
 
 	query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, " AND "))
 
-	_, err := connection.Query(query)
+	_, err := db.Conn.Query(query)
 
 	return err
 }
