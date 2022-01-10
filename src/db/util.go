@@ -1,6 +1,8 @@
 package db
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func CompareBehaviors(behavior1 Behavior, behavior2 Behavior) bool {
 
@@ -43,7 +45,7 @@ func ComparePathMappings(pathMapping1 PathMapping, pathMapping2 PathMapping) boo
 
 }
 
-func parseInterfacesToMapSlice(unparsedData []map[string]interface{}) (parsedData []map[string]string) {
+func ToMapSlice(unparsedData []map[string]interface{}) (parsedData []map[string]string) {
 
 	for index := range unparsedData {
 
@@ -61,110 +63,39 @@ func parseInterfacesToMapSlice(unparsedData []map[string]interface{}) (parsedDat
 
 }
 
-func createPrerequisites() error {
+func TableExists(tableName string) bool {
 
-	transaction, err := connection.Begin()
-	if err != nil {
-		return err
+	rows, _ := Conn.Query("SELECT TABLE_NAME FROM information_schema.TABLES where TABLE_NAME = ?", tableName)
+
+
+	defer rows.Close()
+
+	if rows != nil {
+
+		return true
+
+	} else {
+
+		return false
 	}
 
-	statement1, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS path_mappings (path_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path VARCHAR(255) NOT NULL, `table` VARCHAR(255) NOT NULL) AUTO_INCREMENT=20000;")
-	statement2, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS key_mappings (key_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , `key` VARCHAR(255) NOT NULL, `column` VARCHAR(255) NOT NULL) AUTO_INCREMENT=30000;")
-	statement3, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS behaviors (behavior_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path_mapping_id INT NOT NULL, key_mapping_id INT NOT NULL) AUTO_INCREMENT=10000;")
-
-	_, err = statement1.Exec()
-	if err != nil {
-
-		err := transaction.Rollback()
-		if err != nil {
-			return err
-		}
-
-	}
-
-	_, err = statement2.Exec()
-	if err != nil {
-
-		err := transaction.Rollback()
-		if err != nil {
-			return err
-		}
-
-	}
-
-	_, err = statement3.Exec()
-	if err != nil {
-
-		err := transaction.Rollback()
-		if err != nil {
-			return err
-		}
-
-	}
-
-	err = transaction.Commit()
-	if err != nil {
-		return err
-	}
-
-	return err
 }
 
-func FactoryReset() (err error) {
+func ColumnExists(tableName, columnName string) bool {
 
-	transaction, err := connection.Begin()
+	rows, err := Conn.Query("SELECT column_name FROM information_schema.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?", tableName, columnName)
 
 	if err != nil {
-		return err
+		return false
 	}
 
-	statement1, err := transaction.Prepare("DROP TABLE `behaviors`;")
-	statement2, err := transaction.Prepare("DROP TABLE `path_mappings`;")
-	statement3, err := transaction.Prepare("DROP TABLE `key_mappings`;")
+	defer rows.Close()
 
-	_, err = statement1.Exec()
-	if err != nil {
+	if rows != nil {
 
-		err := transaction.Rollback()
-		if err != nil {
-			return err
-		}
-
-		return err
+		return true
+	} else {
+		return false
 	}
-
-	_, err = statement2.Exec()
-	if err != nil {
-
-		err := transaction.Rollback()
-		if err != nil {
-			return err
-		}
-
-		return err
-	}
-
-	_, err = statement3.Exec()
-	if err != nil {
-
-		err := transaction.Rollback()
-		if err != nil {
-			return err
-		}
-
-		return err
-	}
-
-	err = transaction.Commit()
-	if err != nil {
-		return err
-	}
-
-	err = createPrerequisites()
-	if err != nil {
-		return err
-	}
-
-	return nil
 
 }

@@ -4,7 +4,7 @@ The main goal of GREST is to make possible the implementation of an RESTFul APIs
 
 In present days, an API that follows the REST principles is made defining some constraints and implementing a way to parse request contents in a language that SQL databases understand.
 
-![REST API Overview](./img1.png)
+![REST API Overview](/img/img1.png)
 
 GREST was already built with this implementations and constraints, it's up to the business administrator only the task of customize the prebuilt functionalities to fit it's integration with the application.
 
@@ -36,7 +36,7 @@ In last, but definetly not less important, there is the time necessary to get th
 
 The first step is to understand *how* GREST works, see the image below:
 
-![GREST Pivot](./img2.png)
+![GREST Pivot](/img/img2.png)
 
 The pivot of GREST functioning is the concept of `behavior`. The behavior is how the data will be parsed in a communication with the database. 
 
