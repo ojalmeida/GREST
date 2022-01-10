@@ -32,7 +32,7 @@ func init() {
 // StartServer applies all behaviors and starts to listen for requests
 func StartServer() {
 
-	setServerMux()
+	setServerMuxes()
 
 	server = http.Server{Addr: ":8080", Handler: serverMux}
 

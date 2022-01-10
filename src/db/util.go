@@ -1,6 +1,8 @@
 package db
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func CompareBehaviors(behavior1 Behavior, behavior2 Behavior) bool {
 

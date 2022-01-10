@@ -15,6 +15,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 
+		// In the end of processing, if equals 1, reload serverMux
 		var needReload = float32(0)
 
 		log.Println(fmt.Sprintf("Request received from %s with method %s", request.RemoteAddr, request.Method))

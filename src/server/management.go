@@ -7,7 +7,7 @@ import (
 )
 
 // Transform each behavior in a function that process requests
-func setServerMux() {
+func setServerMuxes() {
 
 	serverMux = http.NewServeMux()
 
@@ -25,7 +25,7 @@ func setServerMux() {
 func ReloadServer() {
 
 	checkHealth()
-	setServerMux()
+	setServerMuxes()
 
 }
 
