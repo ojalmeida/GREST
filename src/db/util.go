@@ -67,6 +67,7 @@ func TableExists(tableName string) bool {
 
 	rows, _ := Conn.Query("SELECT TABLE_NAME FROM information_schema.TABLES where TABLE_NAME = ?", tableName)
 
+
 	defer rows.Close()
 
 	if rows != nil {
