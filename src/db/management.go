@@ -2,42 +2,43 @@ package db
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 )
 
 func createPrerequisites() (err error) {
 
-	transaction, err := Conn.Begin()
+	transaction, err := LocalConn.Begin()
 	if err != nil {
 		return
 	}
 
-	statement1, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS path_mappings (path_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path VARCHAR(255) NOT NULL, `table` VARCHAR(255) NOT NULL) AUTO_INCREMENT=20000;")
-	statement2, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS key_mappings (key_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , `key` VARCHAR(255) NOT NULL, `column` VARCHAR(255) NOT NULL) AUTO_INCREMENT=30000;")
-	statement3, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS behaviors (behavior_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path_mapping_id INT NOT NULL, key_mapping_id INT NOT NULL) AUTO_INCREMENT=10000;")
-	/* New Tables
-	 ### SQLite
-	CREATE TABLE IF NOT EXISTS path_mappings (
+	statement, err := transaction.Prepare(`CREATE TABLE IF NOT EXISTS path_mapping (
 		path_mapping_id	INTEGER PRIMARY KEY AUTOINCREMENT,
 		path			TEXT NOT NULL,
-		`table`			TEXT NOT NULL
-	);
+		_table			TEXT NOT NULL
+	);`)
 
-	CREATE TABLE IF NOT EXISTS key_mappings (
+	statement2, err := transaction.Prepare(`CREATE TABLE IF NOT EXISTS key_mapping (
 		key_mapping_id	INTEGER PRIMARY KEY AUTOINCREMENT,
-		`key`			TEXT NOT NULL,
-		`column`		TEXT NOT NULL
-	);
+		_key			TEXT NOT NULL,
+		_column		TEXT NOT NULL
+	);`)
 
-	CREATE TABLE IF NOT EXISTS behaviors (
+	statement3, err := transaction.Prepare(`CREATE TABLE IF NOT EXISTS behavior (
 		behavior_id		INTEGER PRIMARY KEY AUTOINCREMENT,
 		path_mapping_id	INTEGER NOT NULL,
 		key_mapping_id	INTEGER NOT NULL
 	);
-	*/
-	
-	_, err = statement1.Exec()
+`)
+
+	if err != nil {
+		log.Println(err)
+		panic(err.Error())
+	}
+
+	_, err = statement.Exec()
 	if err != nil {
 
 		err := transaction.Rollback()
@@ -77,7 +78,7 @@ func createPrerequisites() (err error) {
 
 func FactoryReset() (err error) {
 
-	transaction, err := Conn.Begin()
+	transaction, err := LocalConn.Begin()
 
 	if err != nil {
 		return err
@@ -144,7 +145,7 @@ func getPathMapping(id int) (PathMapping, error) {
 
 	var pathMapping PathMapping
 
-	result, err := Read("path_mappings", map[string]string{"path_mapping_id": strconv.Itoa(id)})
+	result, err := Read("path_mappings", map[string]string{"path_mapping_id": strconv.Itoa(id)}, "sqlite3-config")
 
 	if err != nil {
 		return PathMapping{}, err
@@ -166,7 +167,7 @@ func getKeyMapping(id int) (KeyMapping, error) {
 
 	var keyMapping KeyMapping
 
-	result, err := Read("key_mappings", map[string]string{"key_mapping_id": strconv.Itoa(id)})
+	result, err := Read("key_mappings", map[string]string{"key_mapping_id": strconv.Itoa(id)}, "sqlite3-config")
 
 	if err != nil {
 		return KeyMapping{}, err
@@ -183,7 +184,7 @@ func GetBehaviors() ([]Behavior, error) {
 
 	var behaviors []Behavior
 
-	rows, _ := Conn.Query("SELECT path_mapping_id FROM behaviors group by path_mapping_id;")
+	rows, _ := LocalConn.Query("SELECT path_mapping_id FROM behavior GROUP BY path_mapping_id;")
 
 	if rows != nil {
 
@@ -207,7 +208,7 @@ func GetBehaviors() ([]Behavior, error) {
 
 		for i := range pathMappingIds {
 
-			rows, err := Conn.Queryx("SELECT b.key_mapping_id FROM behaviors b INNER JOIN key_mappings km ON b.key_mapping_id = km.key_mapping_id WHERE b.path_mapping_id = ?", pathMappingIds[i])
+			rows, err := LocalConn.Queryx("SELECT b.key_mapping_id FROM behavior b INNER JOIN key_mapping km ON b.key_mapping_id = km.key_mapping_id WHERE b.path_mapping_id = ?", pathMappingIds[i])
 
 			if err != nil {
 				return []Behavior{}, err
@@ -273,7 +274,7 @@ func getPathMappings() ([]PathMapping, error) {
 		table string
 	)
 
-	rows, err := Conn.Query("SELECT path, `table` FROM path_mappings;")
+	rows, err := LocalConn.Query("SELECT path, _table FROM path_mappings;")
 
 	if err != nil {
 		return []PathMapping{}, err
@@ -311,7 +312,7 @@ func getKeyMappings() ([]KeyMapping, error) {
 		column string
 	)
 
-	rows, err := Conn.Query("SELECT `key`, `column`  FROM key_mappings;")
+	rows, err := LocalConn.Query("SELECT _key, _column  FROM key_mappings;")
 
 	if err != nil {
 		return []KeyMapping{}, err
@@ -452,7 +453,7 @@ func PopulateConfigs() error {
 
 	// PathMappings
 	{
-		pathMappingsQuery := "INSERT INTO path_mappings VALUES "
+		pathMappingsQuery := "INSERT OR IGNORE INTO path_mapping VALUES "
 
 		ID := 20000
 
@@ -470,7 +471,7 @@ func PopulateConfigs() error {
 
 		pathMappingsQuery += strings.Join(pathMappingsThatWillBeInserted, ",")
 
-		_, err = Conn.Query(pathMappingsQuery)
+		_, err = LocalConn.Query(pathMappingsQuery)
 		if err != nil {
 			return err
 		}
@@ -478,7 +479,7 @@ func PopulateConfigs() error {
 
 	// KeyMappings
 	{
-		keyMappingsQuery := "INSERT INTO key_mappings VALUES "
+		keyMappingsQuery := "INSERT OR IGNORE INTO key_mapping VALUES "
 
 		ID := 30000
 
@@ -495,7 +496,7 @@ func PopulateConfigs() error {
 
 		keyMappingsQuery += strings.Join(keyMappingsThatWillBeInserted, ", ")
 
-		_, err = Conn.Query(keyMappingsQuery)
+		_, err = LocalConn.Query(keyMappingsQuery)
 		if err != nil {
 			return err
 		}
@@ -503,20 +504,21 @@ func PopulateConfigs() error {
 
 	// Behaviors
 	{
-		behaviorsQuery := "INSERT INTO behaviors VALUES "
+		behaviorsQuery := "INSERT INTO behavior VALUES "
 
 		ID := 10000
+
+		var behaviorsThatWillBeInserted []string
 
 		for i := range requiredBehaviors {
 
 			pathMapping := requiredBehaviors[i].PathMapping
 			keyMappings := requiredBehaviors[i].KeyMappings
-			var behaviorsThatWillBeInserted []string
 
 			var pathMappingsID int
 			var keyMappingIDs []int
 
-			rows, err := Conn.Query("SELECT path_mapping_id FROM path_mappings WHERE path = ? AND `table` = ?", pathMapping.Path, pathMapping.Table)
+			rows, err := LocalConn.Query("SELECT path_mapping_id FROM path_mapping WHERE path = ? AND _table = ?", pathMapping.Path, pathMapping.Table)
 
 			if err != nil {
 
@@ -543,7 +545,7 @@ func PopulateConfigs() error {
 
 				var keyMappingID int
 
-				rows, err := Conn.Query("SELECT key_mapping_id FROM key_mappings WHERE `key` = ? AND `column` = ?", key, column)
+				rows, err := LocalConn.Query("SELECT key_mapping_id FROM key_mapping WHERE _key = ? AND _column = ?", key, column)
 
 				if err != nil {
 
@@ -577,13 +579,13 @@ func PopulateConfigs() error {
 
 			}
 
-			behaviorsQuery += strings.Join(behaviorsThatWillBeInserted, ", ")
-
 			rows.Close()
 
 		}
 
-		_, err = Conn.Query(behaviorsQuery)
+		behaviorsQuery += strings.Join(behaviorsThatWillBeInserted, ", ")
+
+		_, err = LocalConn.Query(behaviorsQuery)
 		if err != nil {
 			return err
 		}
@@ -591,7 +593,6 @@ func PopulateConfigs() error {
 
 	return nil
 }
-
 
 /*
 ### MySQL
@@ -633,4 +634,4 @@ CREATE TABLE IF NOT EXISTS behaviors (
 	path_mapping_id	INTEGER NOT NULL,
 	key_mapping_id	INTEGER NOT NULL
 );
- */
+*/

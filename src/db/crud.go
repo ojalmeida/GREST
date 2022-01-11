@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	"strings"
 )
 
@@ -24,7 +25,7 @@ func (c ColumnDoesNotExistsError) Error() string {
 }
 
 // Create inserts data in the database returning an error if it occurs
-func Create(tableName string, data map[string]string) error {
+func Create(tableName string, data map[string]string, driverName string) error {
 
 	query := fmt.Sprintf("INSERT INTO %s ", tableName)
 	var columns []string
@@ -39,14 +40,26 @@ func Create(tableName string, data map[string]string) error {
 
 	query += fmt.Sprintf("( %s ) VALUES ( %s )", strings.Join(columns, ", "), strings.Join(values, ", "))
 
-	_, err := Conn.Query(query)
+	var err error
+
+	switch driverName {
+
+	case "sqlite3-config":
+
+		_, err = LocalConn.Query(query)
+
+	default:
+
+		_, err = RemoteConn.Query(query)
+
+	}
 
 	return err
 
 }
 
 // Read returns an array of maps containing the results retrieved from database and an error, if it occurs
-func Read(tableName string, filters map[string]string) (result []map[string]string, err error) {
+func Read(tableName string, filters map[string]string, driverName string) (result []map[string]string, err error) {
 
 	if TableExists(tableName) {
 
@@ -75,7 +88,21 @@ func Read(tableName string, filters map[string]string) (result []map[string]stri
 			query += fmt.Sprintf("SELECT * FROM %s ", tableName)
 		}
 
-		rows, err := Conn.Queryx(query)
+		var err error
+		var rows *sqlx.Rows
+
+		switch driverName {
+
+		case "sqlite3-config":
+
+			rows, err = LocalConn.Queryx(query)
+
+		default:
+
+			rows, err = RemoteConn.Queryx(query)
+
+		}
+
 		defer rows.Close()
 
 		if err != nil {
@@ -118,7 +145,7 @@ func Read(tableName string, filters map[string]string) (result []map[string]stri
 }
 
 // Update changes data in the database. using the provided filters and data maps, returning an error if it occurs
-func Update(tableName string, filters map[string]string, data map[string]string) error {
+func Update(tableName string, filters map[string]string, data map[string]string, driverName string) error {
 
 	var filterSlice []string
 	var dataSlice []string
@@ -141,13 +168,25 @@ func Update(tableName string, filters map[string]string, data map[string]string)
 
 	query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, ", "))
 
-	_, err := Conn.Query(query)
+	var err error
+
+	switch driverName {
+
+	case "sqlite3-config":
+
+		_, err = LocalConn.Queryx(query)
+
+	default:
+
+		_, err = RemoteConn.Queryx(query)
+
+	}
 
 	return err
 }
 
 // Delete removes a data from database, using the provided filters, returning an error if it occurs
-func Delete(tableName string, filters map[string]string) error {
+func Delete(tableName string, filters map[string]string, driverName string) error {
 
 	var filterSlice []string
 
@@ -161,7 +200,19 @@ func Delete(tableName string, filters map[string]string) error {
 
 	query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, " AND "))
 
-	_, err := Conn.Query(query)
+	var err error
+
+	switch driverName {
+
+	case "sqlite3-config":
+
+		_, err = LocalConn.Queryx(query)
+
+	default:
+
+		_, err = RemoteConn.Queryx(query)
+
+	}
 
 	return err
 }

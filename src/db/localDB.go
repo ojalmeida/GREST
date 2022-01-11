@@ -1,11 +1,6 @@
 package db
 
-import (
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/jmoiron/sqlx"
-)
-
-var Conn *sqlx.DB
+import "github.com/jmoiron/sqlx"
 
 var requiredPathMappings = []PathMapping{
 	{Path: "/config/path-mappings", Table: "path_mappings"},
@@ -16,10 +11,10 @@ var requiredKeyMappings = []KeyMapping{
 	{Key: "id", Column: "path_mapping_id"},
 	{Key: "id", Column: "key_mapping_id"},
 	{Key: "id", Column: "behavior_id"},
-	{Key: "key", Column: "key"},
-	{Key: "column", Column: "column"},
+	{Key: "key", Column: "_key"},
+	{Key: "column", Column: "_column"},
 	{Key: "path", Column: "path"},
-	{Key: "table", Column: "table"},
+	{Key: "table", Column: "_table"},
 	{Key: "path_mapping_id", Column: "path_mapping_id"},
 	{Key: "key_mapping_id", Column: "key_mapping_id"},
 }
@@ -27,13 +22,13 @@ var requiredBehaviors = []Behavior{
 	{PathMapping: PathMapping{Path: "/config/path-mappings", Table: "path_mappings"}, KeyMappings: []KeyMapping{
 		{Key: "id", Column: "path_mapping_id"},
 		{Key: "path", Column: "path"},
-		{Key: "table", Column: "table"},
+		{Key: "table", Column: "_table"},
 	},
 	},
 	{PathMapping: PathMapping{Path: "/config/key-mappings", Table: "key_mappings"}, KeyMappings: []KeyMapping{
 		{Key: "id", Column: "key_mapping_id"},
-		{Key: "key", Column: "key"},
-		{Key: "column", Column: "column"},
+		{Key: "key", Column: "_key"},
+		{Key: "column", Column: "_column"},
 	},
 	},
 	{PathMapping: PathMapping{Path: "/config/behaviors", Table: "behaviors"}, KeyMappings: []KeyMapping{
@@ -44,10 +39,10 @@ var requiredBehaviors = []Behavior{
 	},
 }
 
+var LocalConn *sqlx.DB
+
 func init() {
 
-	// Local Connection for Configuration.
-	// LConn := LocalDB()
-	Conn = RemoteDB()
+	LocalConn = LocalDB()
 
 }

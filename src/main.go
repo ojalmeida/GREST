@@ -4,6 +4,6 @@ import "github.com/ojalmeida/GREST/src/server"
 
 func main() {
 
-	server.StartServer()
+	server.StartServers()
 
 }

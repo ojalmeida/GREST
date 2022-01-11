@@ -13,19 +13,14 @@ import (
 // for the different http methods.
 func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *http.Request) {
 
-	return func(writer http.ResponseWriter, request *http.Request) {
+	var dbName = "mysql"
 
-		// In the end of processing, if equals 1, reload serverMux
-		var needReload = float32(0)
+	return func(writer http.ResponseWriter, request *http.Request) {
 
 		log.Println(fmt.Sprintf("Request received from %s with method %s", request.RemoteAddr, request.Method))
 
 		writer.Header().Set("Content-Type", "application/json")
 		writer.Header().Set("Access-Control-Allow-Origin", "*")
-
-		if db.CompareBehaviors(behavior, MainBehavior) {
-			needReload += float32(0.5)
-		}
 
 		switch request.Method {
 
@@ -47,7 +42,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					var err error
 
-					responseData, err = db.Read(behavior.PathMapping.Table, fixedFilters)
+					responseData, err = db.Read(behavior.PathMapping.Table, fixedFilters, dbName)
 
 					if err != nil {
 						errors = append(errors, err.Error())
@@ -117,13 +112,11 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					if unknownKeys == nil {
 
-						err = db.Create(behavior.PathMapping.Table, fixedData)
+						err = db.Create(behavior.PathMapping.Table, fixedData, dbName)
 
 						if err != nil {
 							errors = append(errors, err.Error())
 							responseStatus = http.StatusInternalServerError
-						} else {
-							needReload += float32(0.5)
 						}
 
 					} else {
@@ -183,13 +176,11 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					if unknownKeys == nil {
 
-						err = db.Update(behavior.PathMapping.Table, fixedMustData, fixedSetData)
+						err = db.Update(behavior.PathMapping.Table, fixedMustData, fixedSetData, dbName)
 
 						if err != nil {
 							errors = append(errors, err.Error())
 							responseStatus = http.StatusInternalServerError
-						} else {
-							needReload += float32(0.5)
 						}
 
 					} else {
@@ -247,13 +238,11 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					if unknownKeys == nil {
 
-						err = db.Delete(behavior.PathMapping.Table, fixedMustData)
+						err = db.Delete(behavior.PathMapping.Table, fixedMustData, dbName)
 
 						if err != nil {
 							errors = append(errors, err.Error())
 							responseStatus = http.StatusInternalServerError
-						} else {
-							needReload += float32(0.5)
 						}
 
 					} else {
@@ -313,7 +302,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 					if unknownFilters == nil {
 
-						_, err = db.Read(behavior.PathMapping.Table, fixedFilters)
+						_, err = db.Read(behavior.PathMapping.Table, fixedFilters, dbName)
 
 						if err != nil {
 							errors = append(errors, err.Error())
@@ -360,9 +349,223 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			writer.WriteHeader(http.StatusMethodNotAllowed)
 		}
 
-		if needReload == 1 {
-			defer ReloadServer()
+	}
+}
+
+func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request *http.Request) {
+
+	switch endpoint {
+
+	case "/config/behaviors":
+
+		return func(writer http.ResponseWriter, request *http.Request) {
+
+			// In the end of processing, if equals 1, reload serverMux
+			var needReload = float32(0)
+
+			switch request.Method {
+
+			case http.MethodGet:
+
+			case http.MethodPost:
+
+			case http.MethodPut:
+
+			case http.MethodDelete:
+
+			case http.MethodOptions:
+
+			case http.MethodHead:
+
+			}
+
+			if needReload == 1 {
+				defer ReloadConfigServer()
+			}
+
+		}
+
+	case "/config/path-mappings":
+
+		return func(writer http.ResponseWriter, request *http.Request) {
+
+			// In the end of processing, if equals 1, reload serverMux
+			var needReload = float32(0)
+
+			switch request.Method {
+
+			case http.MethodGet:
+
+			case http.MethodPost:
+
+			case http.MethodPut:
+
+			case http.MethodDelete:
+
+			case http.MethodOptions:
+
+			case http.MethodHead:
+
+			}
+
+			if needReload == 1 {
+				defer ReloadConfigServer()
+			}
+
+		}
+
+	case "/config/key-mappings":
+
+		return func(writer http.ResponseWriter, request *http.Request) {
+
+			// In the end of processing, if equals 1, reload serverMux
+			var needReload = float32(0)
+
+			switch request.Method {
+
+			case http.MethodGet:
+
+			case http.MethodPost:
+
+			case http.MethodPut:
+
+			case http.MethodDelete:
+
+			case http.MethodOptions:
+
+			case http.MethodHead:
+
+			}
+
+			if needReload == 1 {
+				defer ReloadConfigServer()
+			}
+
+		}
+
+	case "/config/auth":
+
+		return func(writer http.ResponseWriter, request *http.Request) {
+
+			// In the end of processing, if equals 1, reload serverMux
+			var needReload = float32(0)
+
+			switch request.Method {
+
+			case http.MethodGet:
+
+			case http.MethodPost:
+
+			case http.MethodPut:
+
+			case http.MethodDelete:
+
+			case http.MethodOptions:
+
+			case http.MethodHead:
+
+			}
+
+			if needReload == 1 {
+				defer ReloadConfigServer()
+			}
+
+		}
+
+	case "/config/rate-limit":
+
+		return func(writer http.ResponseWriter, request *http.Request) {
+
+			// In the end of processing, if equals 1, reload serverMux
+			var needReload = float32(0)
+
+			switch request.Method {
+
+			case http.MethodGet:
+
+			case http.MethodPost:
+
+			case http.MethodPut:
+
+			case http.MethodDelete:
+
+			case http.MethodOptions:
+
+			case http.MethodHead:
+
+			}
+
+			if needReload == 1 {
+				defer ReloadConfigServer()
+			}
+
+		}
+
+	case "/config/users":
+
+		return func(writer http.ResponseWriter, request *http.Request) {
+
+			// In the end of processing, if equals 1, reload serverMux
+			var needReload = float32(0)
+
+			switch request.Method {
+
+			case http.MethodGet:
+
+			case http.MethodPost:
+
+			case http.MethodPut:
+
+			case http.MethodDelete:
+
+			case http.MethodOptions:
+
+			case http.MethodHead:
+
+			}
+
+			if needReload == 1 {
+				defer ReloadConfigServer()
+			}
+
+		}
+
+	case "/config/groups":
+
+		return func(writer http.ResponseWriter, request *http.Request) {
+
+			// In the end of processing, if equals 1, reload serverMux
+			var needReload = float32(0)
+
+			switch request.Method {
+
+			case http.MethodGet:
+
+			case http.MethodPost:
+
+			case http.MethodPut:
+
+			case http.MethodDelete:
+
+			case http.MethodOptions:
+
+			case http.MethodHead:
+
+			}
+
+			if needReload == 1 {
+				defer ReloadConfigServer()
+			}
+
 		}
 
 	}
+
+	// Default, if not matched with any endpoint
+	return func(writer http.ResponseWriter, request *http.Request) {
+
+		writer.WriteHeader(http.StatusNotFound)
+
+	}
+
 }
