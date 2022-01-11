@@ -46,6 +46,8 @@ var requiredBehaviors = []Behavior{
 
 func init() {
 
-	Conn = GetConnection()
+	// Local Connection for Configuration.
+	// LConn := LocalDB()
+	Conn = RemoteDB()
 
 }
