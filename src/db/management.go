@@ -2,10 +2,12 @@ package db
 
 import (
 	"fmt"
+	_ "github.com/mattn/go-sqlite3"
+	"log"
+
 	//"log"
 	"strconv"
 	"strings"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 func createPrerequisites() (err error) {
@@ -21,42 +23,24 @@ func createPrerequisites() (err error) {
 	// statement3, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS behaviors (behavior_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path_mapping_id INT NOT NULL, key_mapping_id INT NOT NULL) AUTO_INCREMENT=10000;")
 
 	// SQLite Implementation of Conf Database.
-	/*statement1, _ := */transaction.Prepare( `CREATE TABLE IF NOT EXISTS path_mappings (
-		path_mapping_id	INTEGER PRIMARY KEY AUTOINCREMENT,
-		path			TEXT NOT NULL,
-		table			TEXT NOT NULL
-	);`)
-	/*statement2, _ := */transaction.Prepare(`CREATE TABLE IF NOT EXISTS key_mappings (
+	statement1, _ := transaction.Prepare( "CREATE TABLE IF NOT EXISTS path_mappings (path_mapping_id	INTEGER PRIMARY KEY AUTOINCREMENT, path TEXT NOT NULL,`table` TEXT NOT NULL);")
+	statement2, _ := transaction.Prepare(`CREATE TABLE IF NOT EXISTS key_mappings (
 		key_mapping_id	INTEGER PRIMARY KEY AUTOINCREMENT,
 		key			TEXT NOT NULL,
 		column		TEXT NOT NULL
 	);`)
-	/*statement3, _ := */transaction.Prepare(`CREATE TABLE IF NOT EXISTS behaviors (
+	statement3, _ := transaction.Prepare(`CREATE TABLE IF NOT EXISTS behaviors (
 		behavior_id		INTEGER PRIMARY KEY AUTOINCREMENT,
 		path_mapping_id	INTEGER NOT NULL,
 		key_mapping_id	INTEGER NOT NULL
 	);`)
 
 
-	/*
-	Uncomment area when in use
+
 	_, err = statement1.Exec()
-
-
 	if err != nil {
 		log.Println(err)
 		panic(err.Error())
-	}
-
-	_, err = statement.Exec()
-
-	if err != nil {
-
-		err = transaction.Rollback()
-		if err != nil {
-			return err
-		}
-
 	}
 
 	_, err = statement2.Exec()
@@ -78,7 +62,7 @@ func createPrerequisites() (err error) {
 		}
 
 	}
-	*/
+
 
 	err = transaction.Commit()
 	if err != nil {

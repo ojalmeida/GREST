@@ -35,7 +35,7 @@ func RemoteDB() *sqlx.DB {
 */
 func LocalDB() *sqlx.DB {
 
-	dbname := "src/db/database.db"
+	dbname := "database.db"
 	db, err := os.Open(dbname)
 
 	if err != nil {
