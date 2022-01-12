@@ -48,7 +48,5 @@ var LocalConn *sqlx.DB
 
 func init() {
 	// Remote connection.
-	// RConn := RemoteDB()
-	// Local Connection for Configuration.
 	LocalConn = LocalDB()
 }

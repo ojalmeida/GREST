@@ -39,6 +39,7 @@ func createPrerequisites() (err error) {
 
 
 	/*
+	Uncomment area when in use
 	_, err = statement1.Exec()
 
 

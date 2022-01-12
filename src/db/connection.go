@@ -20,7 +20,7 @@ type databaseAttributes struct {
 
 /*
 	RemoteDB is the connection with the user's database (MySQL)
-	This func needs e host, port and database to create the connection.
+	This func needs e host, port and database to create the connection...
 */
 func RemoteDB() *sqlx.DB {
 	conn, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@%s(%s:%d)/grest", attributes.username, attributes.password, attributes.protocol, attributes.ip, attributes.port))
