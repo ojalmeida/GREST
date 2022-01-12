@@ -6,8 +6,17 @@ import (
 	"net/http"
 )
 
+var implementedFunctionalities []string
+
+func init() {
+	implementedFunctionalities = append(implementedFunctionalities,
+		"/config/behaviors",
+		"/config/path-mappings",
+		"/config/key-mappings")
+}
+
 // Transform each behavior in a function that process requests
-func setServerMuxes() {
+func setServerMux() {
 
 	serverMux = http.NewServeMux()
 
@@ -17,7 +26,16 @@ func setServerMuxes() {
 
 	}
 
-	server.Handler = serverMux
+}
+
+// Assigns a function to each endpoint of implemented configuration functionalities
+func setConfigServerMux() {
+
+	for i := range implementedFunctionalities {
+
+		configServerMux.HandleFunc(implementedFunctionalities[i], GetConfigHandler(implementedFunctionalities[i]))
+
+	}
 
 }
 
@@ -25,7 +43,15 @@ func setServerMuxes() {
 func ReloadServer() {
 
 	checkHealth()
-	setServerMuxes()
+	setServerMux()
+
+}
+
+// ReloadConfigServer reloads handlers of implemented configuration endpoints
+func ReloadConfigServer() {
+
+	checkHealth()
+	setConfigServerMux()
 
 }
 
@@ -53,8 +79,6 @@ func checkHealth() {
 	}
 
 	var err error
-
-	behaviors, err = db.GetBehaviors()
 
 	if err != nil {
 		panic(err.Error())

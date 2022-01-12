@@ -21,7 +21,7 @@ type databaseAttributes struct {
 /*
 	RemoteDB is the connection with the user's database (MySQL)
 	This func needs e host, port and database to create the connection.
- */
+*/
 func RemoteDB() *sqlx.DB {
 	conn, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@%s(%s:%d)/grest", attributes.username, attributes.password, attributes.protocol, attributes.ip, attributes.port))
 	if err != nil {
@@ -32,17 +32,25 @@ func RemoteDB() *sqlx.DB {
 
 /*
 	LocalDB will connect to a local SQLITE database which stores GREST's configuration.
- */
+*/
 func LocalDB() *sqlx.DB {
-	dbname := "database.db"
-	_,err := os.Open(dbname)
+
+	dbname := "src/db/database.db"
+	db, err := os.Open(dbname)
+
 	if err != nil {
-		log.Println(dbname,"was not found!")
-		log.Println("Creating",dbname)
+
+		log.Println(dbname, "was not found!")
+		log.Println("Creating", dbname)
 		os.Create(dbname)
+
 	} else {
-		log.Println(dbname,"found!")
+
+		log.Println(dbname, "found!")
+
 	}
+
+	db.Close()
 
 	conn, err := sqlx.Connect("sqlite3", dbname)
 	if err != nil {
@@ -53,4 +61,5 @@ func LocalDB() *sqlx.DB {
 
 // TODO: [X] 1) define config database (sqlite)
 // TODO: [X] 2) implement connection with sqlite
-// TODO: [] 3) segregate client db from config db
+// TODO: [X] 3) segregate client db from config db
+
