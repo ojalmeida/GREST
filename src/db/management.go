@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func createPrerequisites() (err error) {
@@ -13,34 +14,34 @@ func createPrerequisites() (err error) {
 		return
 	}
 
-	statement1, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS path_mappings (path_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path VARCHAR(255) NOT NULL, `table` VARCHAR(255) NOT NULL) AUTO_INCREMENT=20000;")
-	statement2, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS key_mappings (key_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , `key` VARCHAR(255) NOT NULL, `column` VARCHAR(255) NOT NULL) AUTO_INCREMENT=30000;")
-	statement3, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS behaviors (behavior_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path_mapping_id INT NOT NULL, key_mapping_id INT NOT NULL) AUTO_INCREMENT=10000;")
-	/* New Tables
-	 ### SQLite
-	CREATE TABLE IF NOT EXISTS path_mappings (
+	// MySQL Implementation of Conf Database.
+	// statement1, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS path_mappings (path_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path VARCHAR(255) NOT NULL, `table` VARCHAR(255) NOT NULL) AUTO_INCREMENT=20000;")
+	// statement2, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS key_mappings (key_mapping_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , `key` VARCHAR(255) NOT NULL, `column` VARCHAR(255) NOT NULL) AUTO_INCREMENT=30000;")
+	// statement3, _ := transaction.Prepare("CREATE TABLE IF NOT EXISTS behaviors (behavior_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY , path_mapping_id INT NOT NULL, key_mapping_id INT NOT NULL) AUTO_INCREMENT=10000;")
+
+	// SQLite Implementation of Conf Database.
+	/*statement1, _ := */transaction.Prepare( `CREATE TABLE IF NOT EXISTS path_mappings (
 		path_mapping_id	INTEGER PRIMARY KEY AUTOINCREMENT,
 		path			TEXT NOT NULL,
-		`table`			TEXT NOT NULL
-	);
-
-	CREATE TABLE IF NOT EXISTS key_mappings (
+		table			TEXT NOT NULL
+	);`)
+	/*statement2, _ := */transaction.Prepare(`CREATE TABLE IF NOT EXISTS key_mappings (
 		key_mapping_id	INTEGER PRIMARY KEY AUTOINCREMENT,
-		`key`			TEXT NOT NULL,
-		`column`		TEXT NOT NULL
-	);
-
-	CREATE TABLE IF NOT EXISTS behaviors (
+		key			TEXT NOT NULL,
+		column		TEXT NOT NULL
+	);`)
+	/*statement3, _ := */transaction.Prepare(`CREATE TABLE IF NOT EXISTS behaviors (
 		behavior_id		INTEGER PRIMARY KEY AUTOINCREMENT,
 		path_mapping_id	INTEGER NOT NULL,
 		key_mapping_id	INTEGER NOT NULL
-	);
-	*/
-	
+	);`)
+
+
+	/*
 	_, err = statement1.Exec()
 	if err != nil {
 
-		err := transaction.Rollback()
+		err = transaction.Rollback()
 		if err != nil {
 			return err
 		}
@@ -50,7 +51,7 @@ func createPrerequisites() (err error) {
 	_, err = statement2.Exec()
 	if err != nil {
 
-		err := transaction.Rollback()
+		err = transaction.Rollback()
 		if err != nil {
 			return err
 		}
@@ -60,12 +61,13 @@ func createPrerequisites() (err error) {
 	_, err = statement3.Exec()
 	if err != nil {
 
-		err := transaction.Rollback()
+		err = transaction.Rollback()
 		if err != nil {
 			return err
 		}
 
 	}
+	*/
 
 	err = transaction.Commit()
 	if err != nil {
@@ -90,7 +92,7 @@ func FactoryReset() (err error) {
 	_, err = statement1.Exec()
 	if err != nil {
 
-		err := transaction.Rollback()
+		err = transaction.Rollback()
 		if err != nil {
 			return err
 		}
@@ -101,7 +103,7 @@ func FactoryReset() (err error) {
 	_, err = statement2.Exec()
 	if err != nil {
 
-		err := transaction.Rollback()
+		err = transaction.Rollback()
 		if err != nil {
 			return err
 		}
@@ -112,7 +114,7 @@ func FactoryReset() (err error) {
 	_, err = statement3.Exec()
 	if err != nil {
 
-		err := transaction.Rollback()
+		err = transaction.Rollback()
 		if err != nil {
 			return err
 		}

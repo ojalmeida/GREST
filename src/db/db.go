@@ -2,6 +2,7 @@ package db
 
 import (
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -46,8 +47,9 @@ var requiredBehaviors = []Behavior{
 
 func init() {
 
+	// Remote connection.
+	// RConn := RemoteDB()
 	// Local Connection for Configuration.
-	// LConn := LocalDB()
-	Conn = RemoteDB()
+	Conn = LocalDB()
 
 }

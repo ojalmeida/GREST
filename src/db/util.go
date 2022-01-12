@@ -65,7 +65,7 @@ func ToMapSlice(unparsedData []map[string]interface{}) (parsedData []map[string]
 
 func TableExists(tableName string) bool {
 
-	rows, _ := Conn.Query("SELECT TABLE_NAME FROM information_schema.TABLES where TABLE_NAME = ?", tableName)
+	/*rows, _ := Conn.Query("SELECT TABLE_NAME FROM information_schema.TABLES where TABLE_NAME = ?", tableName)
 
 
 	defer rows.Close()
@@ -78,12 +78,13 @@ func TableExists(tableName string) bool {
 
 		return false
 	}
-
+	*/
+	return true
 }
 
 func ColumnExists(tableName, columnName string) bool {
 
-	rows, err := Conn.Query("SELECT column_name FROM information_schema.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?", tableName, columnName)
+	/* rows, err := Conn.Query("SELECT column_name FROM information_schema.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?", tableName, columnName)
 
 	if err != nil {
 		return false
@@ -97,5 +98,6 @@ func ColumnExists(tableName, columnName string) bool {
 	} else {
 		return false
 	}
-
+	*/
+	return true
 }

@@ -52,5 +52,5 @@ func LocalDB() *sqlx.DB {
 }
 
 // TODO: [X] 1) define config database (sqlite)
-// TODO: [] 2) implement connection with sqlite
+// TODO: [X] 2) implement connection with sqlite
 // TODO: [] 3) segregate client db from config db
