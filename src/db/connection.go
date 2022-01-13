@@ -23,10 +23,16 @@ type databaseAttributes struct {
 	This func needs e host, port and database to create the connection...
 */
 func RemoteDB() *sqlx.DB {
+
+	log.Println("Establishing connection to local database")
+
 	conn, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@%s(%s:%d)/grest", attributes.username, attributes.password, attributes.protocol, attributes.ip, attributes.port))
+
 	if err != nil {
+		log.Println("Fail!")
 		panic(err.Error())
 	}
+
 	return conn
 }
 
@@ -35,14 +41,22 @@ func RemoteDB() *sqlx.DB {
 */
 func LocalDB() *sqlx.DB {
 
+	log.Println("Establishing connection to local database")
+
 	dbname := "database.db"
 	db, err := os.Open(dbname)
 
 	if err != nil {
 
 		log.Println(dbname, "was not found!")
-		log.Println("Creating", dbname)
-		os.Create(dbname)
+		log.Println("\t└──Trying to create", dbname)
+		_, err := os.Create(dbname)
+
+		if err != nil {
+			log.Println("\t\t└──Fail!")
+		} else {
+			log.Println("\t\t└──Success")
+		}
 
 	} else {
 
@@ -58,8 +72,3 @@ func LocalDB() *sqlx.DB {
 	}
 	return conn
 }
-
-// TODO: [X] 1) define config database (sqlite)
-// TODO: [X] 2) implement connection with sqlite
-// TODO: [X] 3) segregate client db from config db
-

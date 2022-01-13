@@ -31,6 +31,8 @@ func setServerMux() {
 // Assigns a function to each endpoint of implemented configuration functionalities
 func setConfigServerMux() {
 
+	configServerMux = http.NewServeMux()
+
 	for i := range implementedFunctionalities {
 
 		configServerMux.HandleFunc(implementedFunctionalities[i], GetConfigHandler(implementedFunctionalities[i]))
@@ -58,25 +60,27 @@ func ReloadConfigServer() {
 // Checks pre-requisites to start server
 func checkHealth() {
 
-	ok, missingPathMappings, missingKeyMappings, missingBehaviors := db.CheckConfigs()
+	log.Println("Checking health of config database")
+
+	ok := db.CheckLocalDB()
 
 	if !ok {
 
-		log.Printf("Missing following PathMappings: %s", missingPathMappings)
-		log.Printf("Missing following KeyMappings: %s", missingKeyMappings)
-		log.Printf("Missing following Behaviors: %s", missingBehaviors)
-		log.Println("Trying to insert default configs")
+		log.Println("\t├──Not ok")
+		log.Println("\t└──Trying to self-healing")
 
-		err := db.PopulateConfigs()
+		err := db.CreateTables()
 
 		if err != nil {
-			log.Println("Fail!")
+			log.Println("\t\t└──Fail!")
 			panic(err.Error())
 		} else {
-			log.Println("Success!")
+			log.Println("\t\t└──Success!")
 		}
 
 	}
+
+	log.Println("Health ok")
 
 	var err error
 
