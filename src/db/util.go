@@ -102,24 +102,46 @@ func TableExists(tableName string, driverName string) bool {
 
 }
 
-func ColumnExists(tableName, columnName string) bool {
+func ColumnExists(tableName, columnName, driverName string) bool {
 
-	rows, err := RemoteConn.Query("SELECT column_name FROM information_schema.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?", tableName, columnName)
+	switch driverName {
 
-	if err != nil {
-		return false
+	case "sqlite3":
+
+		rows, err := RemoteConn.Query("SELECT ? FROM ?", columnName, tableName)
+
+		if err != nil {
+
+			return true
+
+		} else {
+
+			return false
+		}
+
+		rows.Close()
+
+	case "mysql":
+
+		rows, err := RemoteConn.Query("SELECT column_name FROM information_schema.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?", tableName, columnName)
+
+		if err != nil {
+			return false
+		}
+
+		defer rows.Close()
+
+		if rows != nil {
+
+			return true
+
+		} else {
+
+			return false
+
+		}
+
 	}
 
-	defer rows.Close()
-
-	if rows != nil {
-
-		return true
-
-	} else {
-
-		return false
-
-	}
-
+	return false
 }

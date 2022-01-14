@@ -354,6 +354,8 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request *http.Request) {
 
+	driverName := "sqlite3-config"
+
 	switch endpoint {
 
 	//case "/config/behaviors":
@@ -434,6 +436,8 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 
 	case "/config/path-mappings":
 
+		tableName := "path_mapping"
+
 		return func(writer http.ResponseWriter, request *http.Request) {
 
 			// In the end of processing, if equals 1, reload serverMux
@@ -455,7 +459,7 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 
 					var err error
 
-					responseData, err = db.Read("path_mapping", requestPayload.Must, "sqlite3-config")
+					responseData, err = db.Read(tableName, requestPayload.Must, "sqlite3-config")
 
 					if err != nil {
 						errors = append(errors, err.Error())
@@ -501,7 +505,7 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 
 						_ = json.Unmarshal(rawReqPayload, &requestPayload)
 
-						err = db.Create("behavior", requestPayload.Set, "sqlite3-config")
+						err = db.Create(tableName, requestPayload.Set, driverName)
 
 						if err != nil {
 							errors = append(errors, err.Error())
@@ -528,187 +532,142 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 				log.Println(fmt.Sprintf("Response status: %d", res.Status))
 				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
 
-				//case http.MethodPut:
-				//
-				//	var res Response
-				//	var requestPayload PutPayload
-				//	var responseStatus = http.StatusOK
-				//	var errors []string
-				//
-				//	rawReqPayload, err := ioutil.ReadAll(request.Body)
-				//
-				//	log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
-				//
-				//	if err != nil {
-				//		errors = append(errors, "Impossible to read body")
-				//		responseStatus = http.StatusInternalServerError
-				//	} else {
-				//
-				//		if isValidPayload("PUT", string(rawReqPayload)) {
-				//
-				//			_ = json.Unmarshal(rawReqPayload, &requestPayload)
-				//
-				//			fixedMustData, unknownKeys := correctData(behavior, requestPayload.Must, "inbound")
-				//			fixedSetData, unknownKeys := correctData(behavior, requestPayload.Set, "inbound")
-				//
-				//			if unknownKeys == nil {
-				//
-				//				err = db.Update(behavior.PathMapping.Table, fixedMustData, fixedSetData, dbName)
-				//
-				//				if err != nil {
-				//					errors = append(errors, err.Error())
-				//					responseStatus = http.StatusInternalServerError
-				//				}
-				//
-				//			} else {
-				//
-				//				for i := range unknownKeys {
-				//
-				//					errors = append(errors, fmt.Sprintf("Invalid criteria: %s", unknownKeys[i]))
-				//
-				//				}
-				//
-				//			}
-				//
-				//		} else {
-				//
-				//			errors = append(errors, "Invalid payload")
-				//			responseStatus = http.StatusBadRequest
-				//		}
-				//
-				//	}
-				//
-				//	var correctedResponse []map[string]string
-				//
-				//	res.Response = correctedResponse
-				//	res.Status = responseStatus
-				//	res.Errors = errors
-				//
-				//	response, err := json.Marshal(res)
-				//
-				//	writer.WriteHeader(res.Status)
-				//	_, _ = writer.Write(response)
-				//
-				//	log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				//	log.Println(fmt.Sprintf("Errors: %s", res.Errors))
-				//
-				//case http.MethodDelete:
-				//	var res Response
-				//	var requestPayload DeletePayload
-				//	var responseStatus = http.StatusOK
-				//	var errors []string
-				//
-				//	rawReqPayload, err := ioutil.ReadAll(request.Body)
-				//
-				//	log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
-				//
-				//	if err != nil {
-				//		errors = append(errors, "Impossible to read body")
-				//		responseStatus = http.StatusInternalServerError
-				//	} else {
-				//
-				//		if isValidPayload("DELETE", string(rawReqPayload)) {
-				//
-				//			_ = json.Unmarshal(rawReqPayload, &requestPayload)
-				//
-				//			fixedMustData, unknownKeys := correctData(behavior, requestPayload.Must, "inbound")
-				//
-				//			if unknownKeys == nil {
-				//
-				//				err = db.Delete(behavior.PathMapping.Table, fixedMustData, dbName)
-				//
-				//				if err != nil {
-				//					errors = append(errors, err.Error())
-				//					responseStatus = http.StatusInternalServerError
-				//				}
-				//
-				//			} else {
-				//
-				//				for i := range unknownKeys {
-				//
-				//					errors = append(errors, fmt.Sprintf("Invalid criteria: %s", unknownKeys[i]))
-				//
-				//				}
-				//
-				//				responseStatus = http.StatusBadRequest
-				//
-				//			}
-				//
-				//		} else {
-				//
-				//			errors = append(errors, "Invalid payload")
-				//			responseStatus = http.StatusBadRequest
-				//		}
-				//
-				//	}
-				//
-				//	var correctedResponse []map[string]string
-				//
-				//	res.Response = correctedResponse
-				//	res.Status = responseStatus
-				//	res.Errors = errors
-				//
-				//	response, err := json.Marshal(res)
-				//	writer.WriteHeader(res.Status)
-				//	_, _ = writer.Write(response)
-				//
-				//	log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				//	log.Println(fmt.Sprintf("Errors: %s", res.Errors))
-				//
-				//case http.MethodHead:
-				//
-				//	var res Response
-				//	var requestPayload GetPayload
-				//	var responseStatus = http.StatusOK
-				//	var errors []string
-				//
-				//	rawReqPayload, err := ioutil.ReadAll(request.Body)
-				//
-				//	log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
-				//
-				//	if err != nil {
-				//		errors = append(errors, "Impossible to read body")
-				//		responseStatus = http.StatusInternalServerError
-				//	} else {
-				//
-				//		if isValidPayload("GET", string(rawReqPayload)) {
-				//
-				//			_ = json.Unmarshal(rawReqPayload, &requestPayload)
-				//
-				//			fixedFilters, unknownFilters := correctData(behavior, requestPayload.Must, "inbound")
-				//
-				//			if unknownFilters == nil {
-				//
-				//				_, err = db.Read(behavior.PathMapping.Table, fixedFilters, dbName)
-				//
-				//				if err != nil {
-				//					errors = append(errors, err.Error())
-				//				}
-				//
-				//			} else {
-				//
-				//				for i := range unknownFilters {
-				//
-				//					errors = append(errors, fmt.Sprintf("Invalid criteria: %s", unknownFilters[i]))
-				//
-				//				}
-				//
-				//			}
-				//
-				//		} else {
-				//
-				//			errors = append(errors, "Invalid payload")
-				//			responseStatus = http.StatusBadRequest
-				//		}
-				//
-				//	}
-				//
-				//	res.Status = responseStatus
-				//
-				//	writer.WriteHeader(res.Status)
-				//
-				//	log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				//	log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+			case http.MethodPut:
+
+				var res Response
+				var requestPayload PutPayload
+				var responseStatus = http.StatusOK
+				var errors []string
+
+				rawReqPayload, err := ioutil.ReadAll(request.Body)
+
+				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
+
+				if err != nil {
+					errors = append(errors, "Impossible to read body")
+					responseStatus = http.StatusInternalServerError
+				} else {
+
+					if isValidPayload("PUT", string(rawReqPayload)) {
+
+						_ = json.Unmarshal(rawReqPayload, &requestPayload)
+
+						err = db.Update(tableName, requestPayload.Must, requestPayload.Set, driverName)
+
+						if err != nil {
+							errors = append(errors, err.Error())
+							responseStatus = http.StatusInternalServerError
+						}
+
+					} else {
+
+						errors = append(errors, "Invalid payload")
+						responseStatus = http.StatusBadRequest
+					}
+
+				}
+
+				var correctedResponse []map[string]string
+
+				res.Response = correctedResponse
+				res.Status = responseStatus
+				res.Errors = errors
+
+				response, err := json.Marshal(res)
+
+				writer.WriteHeader(res.Status)
+				_, _ = writer.Write(response)
+
+				log.Println(fmt.Sprintf("Response status: %d", res.Status))
+				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+
+			case http.MethodDelete:
+				var res Response
+				var requestPayload DeletePayload
+				var responseStatus = http.StatusOK
+				var errors []string
+
+				rawReqPayload, err := ioutil.ReadAll(request.Body)
+
+				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
+
+				if err != nil {
+					errors = append(errors, "Impossible to read body")
+					responseStatus = http.StatusInternalServerError
+				} else {
+
+					if isValidPayload("DELETE", string(rawReqPayload)) {
+
+						_ = json.Unmarshal(rawReqPayload, &requestPayload)
+
+						err = db.Delete(tableName, requestPayload.Must, driverName)
+
+						if err != nil {
+							errors = append(errors, err.Error())
+							responseStatus = http.StatusInternalServerError
+						}
+
+					} else {
+
+						errors = append(errors, "Invalid payload")
+						responseStatus = http.StatusBadRequest
+					}
+
+				}
+
+				var correctedResponse []map[string]string
+
+				res.Response = correctedResponse
+				res.Status = responseStatus
+				res.Errors = errors
+
+				response, err := json.Marshal(res)
+				writer.WriteHeader(res.Status)
+				_, _ = writer.Write(response)
+
+				log.Println(fmt.Sprintf("Response status: %d", res.Status))
+				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+
+			case http.MethodHead:
+
+				var res Response
+				var requestPayload GetPayload
+				var responseStatus = http.StatusOK
+				var errors []string
+
+				rawReqPayload, err := ioutil.ReadAll(request.Body)
+
+				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
+
+				if err != nil {
+					errors = append(errors, "Impossible to read body")
+					responseStatus = http.StatusInternalServerError
+				} else {
+
+					if isValidPayload("GET", string(rawReqPayload)) {
+
+						_ = json.Unmarshal(rawReqPayload, &requestPayload)
+
+						_, err = db.Read(tableName, requestPayload.Must, driverName)
+
+						if err != nil {
+							errors = append(errors, err.Error())
+						}
+
+					} else {
+
+						errors = append(errors, "Invalid payload")
+						responseStatus = http.StatusBadRequest
+					}
+
+				}
+
+				res.Status = responseStatus
+
+				writer.WriteHeader(res.Status)
+
+				log.Println(fmt.Sprintf("Response status: %d", res.Status))
+				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
 
 			}
 
@@ -875,5 +834,5 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 }
 
 // TODO: implement behavior processing [ ] -> Pietro
-// TODO: implement path-mapping processing [ ] -> Otaviano
+// TODO: implement path-mapping processing [ X ] -> Otaviano
 // TODO: implement key-mapping processing [ ] -> nil
