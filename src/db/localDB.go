@@ -34,7 +34,6 @@ func CheckLocalDB() bool {
 
 	if err != nil {
 
-		_ = transaction.Rollback()
 		return false
 	}
 

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 )
 
@@ -53,7 +54,7 @@ func ToMapSlice(unparsedData []map[string]interface{}) (parsedData []map[string]
 
 		for k, v := range unparsedData[index] {
 
-			parsedDatum[k] = fmt.Sprintf("%s", v)
+			parsedDatum[k] = fmt.Sprintf("%v", v)
 		}
 
 		parsedData = append(parsedData, parsedDatum)
@@ -63,20 +64,41 @@ func ToMapSlice(unparsedData []map[string]interface{}) (parsedData []map[string]
 
 }
 
-func TableExists(tableName string) bool {
+func TableExists(tableName string, driverName string) bool {
 
-	rows, _ := RemoteConn.Query("SELECT TABLE_NAME FROM information_schema.TABLES where TABLE_NAME = ?", tableName)
+	var rows *sql.Rows
 
-	defer rows.Close()
+	switch driverName {
+
+	case "sqlite3-config":
+
+		rows, _ = LocalConn.Query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", tableName)
+		defer rows.Close()
 
 		if rows != nil {
 
-		return true
+			for rows.Next() {
 
-	} else {
+				return true
+			}
 
-		return false
+		}
+
+	case "mysql":
+
+		rows, _ = RemoteConn.Query("SELECT TABLE_NAME FROM information_schema.TABLES where TABLE_NAME = ?", tableName)
+		defer rows.Close()
+
+		if rows != nil {
+
+			for rows.Next() {
+
+				return true
+			}
+
+		}
 	}
+	return false
 
 }
 

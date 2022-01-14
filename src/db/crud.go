@@ -61,7 +61,9 @@ func Create(tableName string, data map[string]string, driverName string) error {
 // Read returns an array of maps containing the results retrieved from database and an error, if it occurs
 func Read(tableName string, filters map[string]string, driverName string) (result []map[string]string, err error) {
 
-	if TableExists(tableName) {
+	//if localConfig{} else {}
+
+	if TableExists(tableName, driverName) {
 
 		var unparsedResults []map[string]interface{}
 		var query string
