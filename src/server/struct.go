@@ -20,5 +20,5 @@ type PutPayload struct {
 }
 
 type DeletePayload struct {
-	Must map[string]string
+	Must map[string]string `json:"must"`
 }

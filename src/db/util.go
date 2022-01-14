@@ -69,7 +69,7 @@ func TableExists(tableName string) bool {
 
 	defer rows.Close()
 
-	if rows != nil {
+		if rows != nil {
 
 		return true
 
