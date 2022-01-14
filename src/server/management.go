@@ -6,8 +6,17 @@ import (
 	"net/http"
 )
 
+var implementedFunctionalities []string
+
+func init() {
+	implementedFunctionalities = append(implementedFunctionalities,
+		"/config/behaviors",
+		"/config/path-mappings",
+		"/config/key-mappings")
+}
+
 // Transform each behavior in a function that process requests
-func setServerMuxes() {
+func setServerMux() {
 
 	serverMux = http.NewServeMux()
 
@@ -17,7 +26,18 @@ func setServerMuxes() {
 
 	}
 
-	server.Handler = serverMux
+}
+
+// Assigns a function to each endpoint of implemented configuration functionalities
+func setConfigServerMux() {
+
+	configServerMux = http.NewServeMux()
+
+	for i := range implementedFunctionalities {
+
+		configServerMux.HandleFunc(implementedFunctionalities[i], GetConfigHandler(implementedFunctionalities[i]))
+
+	}
 
 }
 
@@ -25,36 +45,44 @@ func setServerMuxes() {
 func ReloadServer() {
 
 	checkHealth()
-	setServerMuxes()
+	setServerMux()
+
+}
+
+// ReloadConfigServer reloads handlers of implemented configuration endpoints
+func ReloadConfigServer() {
+
+	checkHealth()
+	setConfigServerMux()
 
 }
 
 // Checks pre-requisites to start server
 func checkHealth() {
 
-	ok, missingPathMappings, missingKeyMappings, missingBehaviors := db.CheckConfigs()
+	log.Println("Checking health of config database")
+
+	ok := db.CheckLocalDB()
 
 	if !ok {
 
-		log.Printf("Missing following PathMappings: %s", missingPathMappings)
-		log.Printf("Missing following KeyMappings: %s", missingKeyMappings)
-		log.Printf("Missing following Behaviors: %s", missingBehaviors)
-		log.Println("Trying to insert default configs")
+		log.Println("\t├──Not ok")
+		log.Println("\t└──Trying to self-healing")
 
-		err := db.PopulateConfigs()
+		err := db.CreateTables()
 
 		if err != nil {
-			log.Println("Fail!")
+			log.Println("\t\t└──Fail!")
 			panic(err.Error())
 		} else {
-			log.Println("Success!")
+			log.Println("\t\t└──Success!")
 		}
 
 	}
 
-	var err error
+	log.Println("Health ok")
 
-	behaviors, err = db.GetBehaviors()
+	var err error
 
 	if err != nil {
 		panic(err.Error())
