@@ -104,6 +104,7 @@ func TableExists(tableName string, driverName string) bool {
 
 func ColumnExists(tableName, columnName, driverName string) bool {
 
+
 	switch driverName {
 
 	case "sqlite3":
