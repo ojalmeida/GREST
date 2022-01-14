@@ -157,7 +157,7 @@ func getPathMapping(id int) (PathMapping, error) {
 
 	result, err := Read("path_mapping", map[string]string{"path_mapping_id": strconv.Itoa(id)}, "sqlite3-config")
 
-	if err != nil {
+	if err != nil || result == nil {
 		return PathMapping{}, err
 	}
 
