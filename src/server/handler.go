@@ -360,10 +360,10 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 
 	case "/config/behaviors":
 
-		var needReload float32 = 0
-		tableName := ""
-
 		return func(writer http.ResponseWriter, request *http.Request) {
+
+			var needReload float32 = 0
+			tableName := "behavior"
 
 			switch request.Method {
 
@@ -451,6 +451,10 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 
 				log.Println(fmt.Sprintf("Response status: %d", res.Status))
 				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+
+				if needReload == 1 {
+					defer ReloadConfigServer()
+				}
 
 			case http.MethodPut: // If Method is Put
 				var res Response
@@ -589,15 +593,6 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
 
 			}
-
-			if needReload == 1 {
-				defer ReloadConfigServer()
-			}
-
-		}
-
-
-	}
 
 			if needReload == 1 {
 				defer ReloadConfigServer()
