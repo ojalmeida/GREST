@@ -352,7 +352,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 	}
 }
 
-func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request *http.Request) {
+func GetConfigHandler(endpoint string, reload chan bool) func(writer http.ResponseWriter, request *http.Request) {
 
 	driverName := "sqlite3-config"
 
@@ -383,7 +383,6 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 
 					responseData, err = db.Read(tableName, requestPayload.Must, driverName)
 
-
 					if err != nil {
 						errors = append(errors, err.Error())
 					}
@@ -405,7 +404,6 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 
 				log.Println(fmt.Sprintf("Response status: %d", res.Status))
 				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
-
 
 			case http.MethodPost: // If Method is Post.
 
@@ -436,6 +434,8 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 							responseStatus = http.StatusInternalServerError
 						}
 
+						needReload += float32(1)
+
 					} else {
 
 						errors = append(errors, "Invalid payload")
@@ -455,12 +455,6 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 
 				log.Println(fmt.Sprintf("Response status: %d", res.Status))
 				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
-
-
-				if needReload == 1 {
-					defer ReloadConfigServer()
-				}
-                                
 
 			case http.MethodPut: // If Method is Put
 
@@ -488,6 +482,8 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 							errors = append(errors, err.Error())
 							responseStatus = http.StatusInternalServerError
 						}
+
+						needReload += float32(1)
 
 					} else {
 
@@ -537,6 +533,8 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 							responseStatus = http.StatusInternalServerError
 						}
 
+						needReload += float32(1)
+
 					} else {
 
 						errors = append(errors, "Invalid payload")
@@ -557,7 +555,6 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 
 				log.Println(fmt.Sprintf("Response status: %d", res.Status))
 				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
-
 
 			case http.MethodHead:
 
@@ -603,13 +600,12 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 			}
 
 			if needReload == 1 {
-				defer ReloadConfigServer()
+				defer func() { reload <- true }()
 			}
-
 
 		}
 
-		case "/config/path-mappings":
+	case "/config/path-mappings":
 
 		tableName := "path_mapping"
 
@@ -847,7 +843,7 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 			}
 
 			if needReload == 1 {
-				defer ReloadConfigServer()
+				defer func() { reload <- true }()
 			}
 
 		}
@@ -1090,7 +1086,7 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 			}
 
 			if needReload == 1 {
-				defer ReloadConfigServer()
+				defer func() { reload <- true }()
 			}
 
 		}
@@ -1119,7 +1115,6 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 			}
 
 			if needReload == 1 {
-				defer ReloadConfigServer()
 			}
 
 		}
@@ -1148,7 +1143,6 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 			}
 
 			if needReload == 1 {
-				defer ReloadConfigServer()
 			}
 
 		}
@@ -1177,7 +1171,6 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 			}
 
 			if needReload == 1 {
-				defer ReloadConfigServer()
 			}
 
 		}
@@ -1206,19 +1199,19 @@ func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request 
 			}
 
 			if needReload == 1 {
-				defer ReloadConfigServer()
 			}
+
+		}
+
+	default:
+
+		// Default, if not matched with any endpoint
+		return func(writer http.ResponseWriter, request *http.Request) {
+
+			writer.WriteHeader(http.StatusNotFound)
 
 		}
 
 	}
 
-	// Default, if not matched with any endpoint
-	return func(writer http.ResponseWriter, request *http.Request) {
-
-		writer.WriteHeader(http.StatusNotFound)
-
-	}
-
 }
-

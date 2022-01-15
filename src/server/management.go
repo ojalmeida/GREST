@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"github.com/ojalmeida/GREST/src/db"
 	"log"
 	"net/http"
@@ -8,15 +9,35 @@ import (
 
 var implementedFunctionalities []string
 
+var reloadChannel = make(chan bool)
+
 func init() {
 	implementedFunctionalities = append(implementedFunctionalities,
 		"/config/behaviors",
 		"/config/path-mappings",
 		"/config/key-mappings")
+
 }
 
 // Transform each behavior in a function that process requests
-func setServerMux() {
+func prepareServer() {
+
+	checkHealth()
+
+	log.Println("Getting user-defined endpoints")
+
+	var err error
+	behaviors, err = db.GetBehaviors()
+
+	if err != nil {
+
+		log.Println("\t└──Fail!")
+		panic(err.Error())
+
+	} else {
+
+		log.Println("\t└──Success!")
+	}
 
 	serverMux = http.NewServeMux()
 
@@ -26,34 +47,22 @@ func setServerMux() {
 
 	}
 
+	server = http.Server{Addr: ":80", Handler: serverMux}
+
 }
 
 // Assigns a function to each endpoint of implemented configuration functionalities
-func setConfigServerMux() {
+func prepareConfigServer() {
 
 	configServerMux = http.NewServeMux()
 
 	for i := range implementedFunctionalities {
 
-		configServerMux.HandleFunc(implementedFunctionalities[i], GetConfigHandler(implementedFunctionalities[i]))
+		configServerMux.HandleFunc(implementedFunctionalities[i], GetConfigHandler(implementedFunctionalities[i], reloadChannel))
 
 	}
 
-}
-
-// ReloadServer reloads data handlers
-func ReloadServer() {
-
-	checkHealth()
-	setServerMux()
-
-}
-
-// ReloadConfigServer reloads handlers of implemented configuration endpoints
-func ReloadConfigServer() {
-
-	checkHealth()
-	setConfigServerMux()
+	configServer = http.Server{Addr: ":9090", Handler: configServerMux}
 
 }
 
@@ -87,5 +96,75 @@ func checkHealth() {
 	if err != nil {
 		panic(err.Error())
 	}
+
+}
+
+// StartServers applies all behaviors and starts to listen for requests
+func StartServers() {
+
+	log.Println("Starting servers")
+
+	go listen()
+
+	go listenConfig()
+
+}
+
+func startServer() {
+
+	log.Println("Listen requests to user-defined endpoints in port 80")
+	if err := server.ListenAndServe(); err != http.ErrServerClosed {
+	}
+
+}
+
+func startConfigServer() {
+
+	log.Println("Configuring config server")
+
+	prepareConfigServer()
+
+	log.Println("\t└──Success!")
+
+	go func() {
+
+		log.Println("Listen requests to configuration endpoints in port 9090")
+		log.Fatal(configServer.ListenAndServe())
+
+	}()
+
+}
+
+func listen() {
+
+	log.Println("Starting server")
+
+	prepareServer()
+	go startServer()
+
+	needReload := <-reloadChannel
+
+	if needReload {
+
+		log.Println("Stopping server...")
+
+		err := server.Shutdown(context.Background())
+
+		if err != nil {
+			log.Println("\t└──Fail!")
+		} else {
+
+			log.Println("\t└──Success!")
+			listen()
+		}
+
+	}
+
+}
+
+func listenConfig() {
+
+	prepareConfigServer()
+	startConfigServer()
 
 }
