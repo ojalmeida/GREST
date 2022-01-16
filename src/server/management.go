@@ -47,7 +47,9 @@ func prepareServer() {
 
 	}
 
-	server = http.Server{Addr: ":80", Handler: serverMux}
+	server = http.Server{
+		Addr: Conf.Listener.Production.Address+":"+Conf.Listener.Production.Port,
+		Handler: serverMux}
 
 }
 
@@ -62,7 +64,9 @@ func prepareConfigServer() {
 
 	}
 
-	configServer = http.Server{Addr: ":9090", Handler: configServerMux}
+	configServer = http.Server{
+		Addr: Conf.Listener.Management.Address+":"+Conf.Listener.Management.Port,
+		Handler: configServerMux}
 
 }
 
@@ -101,9 +105,8 @@ func checkHealth() {
 
 // StartServers applies all behaviors and starts to listen for requests
 func StartServers() {
-
+	Conf = GConfig()
 	log.Println("Starting servers")
-
 	go listen()
 
 	go listenConfig()
@@ -163,7 +166,6 @@ func listen() {
 }
 
 func listenConfig() {
-
 	prepareConfigServer()
 	startConfigServer()
 
