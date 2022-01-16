@@ -1,4 +1,4 @@
-package db
+package config
 
 import (
 	"gopkg.in/yaml.v2"
@@ -8,17 +8,9 @@ import (
 )
 
 type Config struct {
-	Project  string `yaml:"Project"`
-	Version  string `yaml:"Version"`
-	Database struct {
-		DBMS     string `yaml:"DBMS"`
-		Address  string `yaml:"Address"`
-		Port     string `yaml:"Port"`
-		Database string `yaml:"database"`
-		Username string `yaml:"Username"`
-		Password string `yaml:"Password"`
-	} `yaml:"Database"`
-	Listener struct {
+	Project string `yaml:"Project"`
+	Version string `yaml:"Version"`
+	API     struct {
 		Production struct {
 			Address string `yaml:"Address"`
 			Port    string `yaml:"Port"`
@@ -27,10 +19,18 @@ type Config struct {
 			Address string `yaml:"Address"`
 			Port    string `yaml:"Port"`
 		} `yaml:"Management"`
-	} `yaml:"Listener"`
+	} `yaml:"API"`
+	Database struct {
+		DBMS     string `yaml:"DBMS"`
+		Address  string `yaml:"Address"`
+		Port     string `yaml:"Port"`
+		Schema   string `yaml:"Schema"`
+		Username string `yaml:"Username"`
+		Password string `yaml:"Password"`
+	} `yaml:"Database"`
 }
 
-var Conf Config
+var Conf Config = Config{}
 
 /*
 	GConfig opens and turns the configuration file into a struct
@@ -42,11 +42,11 @@ var Conf Config
 	3. create a "Config" type struct
 	4. Unmarshal yaml to struct
 	5. return Config structure
- */
+*/
 func init() {
 	confFile := "config.yaml"
 	log.Println("Opening configuration file")
-	cf,err := os.Open(confFile)
+	cf, err := os.Open(confFile)
 	if err != nil {
 		log.Println(confFile, "was not found!")
 		log.Println("\t└──Trying to create", confFile)
@@ -56,8 +56,8 @@ func init() {
 		} else {
 			log.Println("\t\t├──Success")
 			log.Println("\t\t└──Writing default configuration")
-			file,_ := os.OpenFile(confFile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-			_,err = file.WriteString(defualtConf())
+			file, _ := os.OpenFile(confFile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+			_, err = file.WriteString(getDefaultConfig())
 			if err != nil {
 				log.Println(err.Error())
 				log.Println("\t\t\t└──Fail!")
@@ -76,33 +76,31 @@ func init() {
 		log.Println(err.Error())
 	}
 
-	C := Config{}
-	err = yaml.Unmarshal(body, &C)
+	err = yaml.Unmarshal(body, &Conf)
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	Conf = C
 }
 
-
-func defualtConf() string {
-	return `Project: ProjectName
+func getDefaultConfig() string {
+	return `
+Project: ProjectName
 Version: 1.0
 
-Database:
-  DBMS: mysql
-  Address: 127.0.0.1
-  Port: 3306
-  database: grestdb
-  Username: Filipe
-  Password: Tetris123
-
-Listener:
+API:
   Production:
     Address: 0.0.0.0
     Port: 8080
   Management:
     Address: 0.0.0.0
     Port: 9090
+
+Database:
+  DBMS: mysql
+  Address: 127.0.0.1
+  Port: 3306
+  Schema: grestdb
+  Username: root
+  Password: root
 `
 }

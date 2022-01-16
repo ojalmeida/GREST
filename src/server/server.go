@@ -12,5 +12,3 @@ var serverMux *http.ServeMux
 
 var configServerMux *http.ServeMux
 var configServer http.Server
-
-var Conf db.Config
