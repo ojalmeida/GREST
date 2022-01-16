@@ -4,29 +4,25 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/ojalmeida/GREST/src/config"
 	"log"
 	"os"
 )
-
-var attributes = databaseAttributes{"root", "root", "127.0.0.1", "tcp", 3306}
-
-type databaseAttributes struct {
-	username string
-	password string
-	ip       string
-	protocol string
-	port     uint16
-}
 
 /*
 	RemoteDB is the connection with the user's database (MySQL)
 	This func needs e host, port and database to create the connection...
 */
 func RemoteDB() *sqlx.DB {
-
 	log.Println("Establishing connection to local database")
 
-	conn, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@%s(%s:%d)/grest", attributes.username, attributes.password, attributes.protocol, attributes.ip, attributes.port))
+	conn, err := sqlx.Open(config.Conf.Database.DBMS, fmt.Sprintf("%s:%s@%s(%s:%s)/%s",
+		config.Conf.Database.Username,
+		config.Conf.Database.Password,
+		"tcp",
+		config.Conf.Database.Address,
+		config.Conf.Database.Port,
+		config.Conf.Database.Schema))
 
 	if err != nil {
 		log.Println("Fail!")

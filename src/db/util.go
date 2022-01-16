@@ -104,12 +104,13 @@ func TableExists(tableName string, driverName string) bool {
 
 func ColumnExists(tableName, columnName, driverName string) bool {
 
-
 	switch driverName {
 
 	case "sqlite3":
 
 		rows, err := RemoteConn.Query("SELECT ? FROM ?", columnName, tableName)
+
+		defer rows.Close()
 
 		if err != nil {
 
@@ -119,8 +120,6 @@ func ColumnExists(tableName, columnName, driverName string) bool {
 
 			return false
 		}
-
-		rows.Close()
 
 	case "mysql":
 
