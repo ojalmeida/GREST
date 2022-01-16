@@ -105,7 +105,6 @@ func checkHealth() {
 
 // StartServers applies all behaviors and starts to listen for requests
 func StartServers() {
-	Conf = GConfig()
 	log.Println("Starting servers")
 	go listen()
 

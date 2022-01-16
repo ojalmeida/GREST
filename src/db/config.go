@@ -1,10 +1,10 @@
-package server
+package db
 
 import (
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
-	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -30,6 +30,8 @@ type Config struct {
 	} `yaml:"Listener"`
 }
 
+var Conf Config
+
 /*
 	GConfig opens and turns the configuration file into a struct
 	that will be used as base to start the connections.
@@ -41,7 +43,7 @@ type Config struct {
 	4. Unmarshal yaml to struct
 	5. return Config structure
  */
-func GConfig() Config {
+func init() {
 	confFile := "config.yaml"
 	log.Println("Opening configuration file")
 	cf,err := os.Open(confFile)
@@ -79,7 +81,7 @@ func GConfig() Config {
 	if err != nil {
 		log.Fatalf("error: %v", err)
 	}
-	return C
+	Conf = C
 }
 
 
