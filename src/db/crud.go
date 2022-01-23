@@ -250,11 +250,11 @@ func Update(tableName string, filters map[string]string, data map[string]string,
 
 		for k, v := range filters {
 
-			filterSlice = append(filterSlice, fmt.Sprintf("%s = '%s'", k, v))
+			filterSlice = append(filterSlice, fmt.Sprintf("`%s` = '%s'", k, v))
 
 		}
 
-		query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, ", "))
+		query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, " AND "))
 
 		var err error
 
@@ -293,11 +293,11 @@ func Update(tableName string, filters map[string]string, data map[string]string,
 
 		for k, v := range filters {
 
-			filterSlice = append(filterSlice, fmt.Sprintf("%s = '%s'", k, v))
+			filterSlice = append(filterSlice, fmt.Sprintf("`%s` = '%s'", k, v))
 
 		}
 
-		query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, ", "))
+		query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, " AND "))
 
 		var err error
 
