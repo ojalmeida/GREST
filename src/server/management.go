@@ -43,7 +43,18 @@ func prepareServer() {
 
 	serverMux = http.NewServeMux()
 
+	zombieBehavior := db.Behavior{
+		PathMapping: db.PathMapping{},
+		KeyMappings: nil,
+	}
+
 	for _, behavior := range behaviors {
+
+		if db.ComparePathMappings(behavior.PathMapping, zombieBehavior.PathMapping) || behavior.KeyMappings == nil {
+
+			continue
+
+		}
 
 		serverMux.HandleFunc(behavior.PathMapping.Path, GetHandler(behavior))
 
