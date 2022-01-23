@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 // GetHandler returns a data handle based on given behavior. This handle determines how a data will be handled
@@ -31,6 +32,12 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			var requestPayload GetPayload
 			var responseStatus = http.StatusOK
 			var errors []string
+
+			if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+				request.URL.Path = unescapedPath
+
+			}
 
 			if isValidQueryString(request.URL.String()) {
 
@@ -92,6 +99,12 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			var requestPayload PostPayload
 			var responseStatus = http.StatusOK
 			var errors []string
+
+			if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+				request.URL.Path = unescapedPath
+
+			}
 
 			writer.Header().Set("Content-Type", "application/json")
 
@@ -158,6 +171,12 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			var responseStatus = http.StatusOK
 			var errors []string
 
+			if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+				request.URL.Path = unescapedPath
+
+			}
+
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
 
 			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
@@ -220,6 +239,12 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			var requestPayload DeletePayload
 			var responseStatus = http.StatusOK
 			var errors []string
+
+			if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+				request.URL.Path = unescapedPath
+
+			}
 
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
 
@@ -284,6 +309,12 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			var requestPayload GetPayload
 			var responseStatus = http.StatusOK
 			var errors []string
+
+			if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+				request.URL.Path = unescapedPath
+
+			}
 
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
 
@@ -375,6 +406,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var responseStatus = http.StatusOK
 				var errors []string
 
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
+
 				if isValidQueryString(request.URL.String()) {
 
 					requestPayload = toGetPayload(request.URL.RawQuery)
@@ -411,6 +448,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var requestPayload PostPayload
 				var responseStatus = http.StatusOK
 				var errors []string
+
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
 
 				writer.Header().Set("Content-Type", "application/json")
 
@@ -463,6 +506,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var responseStatus = http.StatusOK
 				var errors []string
 
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
+
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
 				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
@@ -513,6 +562,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var responseStatus = http.StatusOK
 				var errors []string
 
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
+
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
 				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
@@ -562,6 +617,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var requestPayload GetPayload
 				var responseStatus = http.StatusOK
 				var errors []string
+
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
@@ -624,6 +685,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var responseStatus = http.StatusOK
 				var errors []string
 
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
+
 				if isValidQueryString(request.URL.String()) {
 
 					requestPayload = toGetPayload(request.URL.RawQuery)
@@ -660,6 +727,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var requestPayload PostPayload
 				var responseStatus = http.StatusOK
 				var errors []string
+
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
 
 				writer.Header().Set("Content-Type", "application/json")
 
@@ -710,6 +783,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var responseStatus = http.StatusOK
 				var errors []string
 
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
+
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
 				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
@@ -758,6 +837,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var responseStatus = http.StatusOK
 				var errors []string
 
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
+
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
 				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
@@ -805,6 +890,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var requestPayload GetPayload
 				var responseStatus = http.StatusOK
 				var errors []string
+
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
@@ -867,6 +958,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var responseStatus = http.StatusOK
 				var errors []string
 
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
+
 				if isValidQueryString(request.URL.String()) {
 
 					requestPayload = toGetPayload(request.URL.RawQuery)
@@ -903,6 +1000,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var requestPayload PostPayload
 				var responseStatus = http.StatusOK
 				var errors []string
+
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
 
 				writer.Header().Set("Content-Type", "application/json")
 
@@ -953,6 +1056,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var responseStatus = http.StatusOK
 				var errors []string
 
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
+
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
 				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
@@ -1001,6 +1110,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var responseStatus = http.StatusOK
 				var errors []string
 
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
+
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
 				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
@@ -1048,6 +1163,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				var requestPayload GetPayload
 				var responseStatus = http.StatusOK
 				var errors []string
+
+				if unescapedPath, err := url.PathUnescape(request.URL.String()); err != nil {
+
+					request.URL.Path = unescapedPath
+
+				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
