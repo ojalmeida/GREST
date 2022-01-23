@@ -57,18 +57,13 @@ func Create(tableName string, data map[string]string, driverName string) error {
 		}
 
 		_, err = statement.Exec()
-		if err != nil {
-
-			return err
-
-		}
-
-		err = transaction.Commit()
+		_ = transaction.Commit()
 		if err != nil {
 			return err
 		}
 
-		return err
+		return nil
+
 
 	default:
 
@@ -256,11 +251,11 @@ func Update(tableName string, filters map[string]string, data map[string]string,
 
 		for k, v := range filters {
 
-			filterSlice = append(filterSlice, fmt.Sprintf("%s = '%s'", k, v))
+			filterSlice = append(filterSlice, fmt.Sprintf("`%s` = '%s'", k, v))
 
 		}
 
-		query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, ", "))
+		query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, " AND "))
 
 		var err error
 
@@ -275,18 +270,12 @@ func Update(tableName string, filters map[string]string, data map[string]string,
 		}
 
 		_, err = statement.Exec()
-		if err != nil {
-
-			return err
-
-		}
-
 		err = transaction.Commit()
 		if err != nil {
 			return err
 		}
 
-		return err
+		return nil
 
 	default:
 
@@ -305,11 +294,11 @@ func Update(tableName string, filters map[string]string, data map[string]string,
 
 		for k, v := range filters {
 
-			filterSlice = append(filterSlice, fmt.Sprintf("%s = '%s'", k, v))
+			filterSlice = append(filterSlice, fmt.Sprintf("`%s` = '%s'", k, v))
 
 		}
 
-		query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, ", "))
+		query += fmt.Sprintf("WHERE %s", strings.Join(filterSlice, " AND "))
 
 		var err error
 
@@ -353,18 +342,12 @@ func Delete(tableName string, filters map[string]string, driverName string) erro
 		}
 
 		_, err = statement.Exec()
-		if err != nil {
-
-			return err
-
-		}
-
 		err = transaction.Commit()
 		if err != nil {
 			return err
 		}
 
-		return err
+		return nil
 
 	default:
 

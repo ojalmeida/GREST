@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/ojalmeida/GREST/src/config"
 	"github.com/ojalmeida/GREST/src/db"
 	"log"
 	"net/http"
@@ -12,6 +13,7 @@ var implementedFunctionalities []string
 var reloadChannel = make(chan bool)
 
 func init() {
+
 	implementedFunctionalities = append(implementedFunctionalities,
 		"/config/behaviors",
 		"/config/path-mappings",
@@ -41,13 +43,26 @@ func prepareServer() {
 
 	serverMux = http.NewServeMux()
 
+	zombieBehavior := db.Behavior{
+		PathMapping: db.PathMapping{},
+		KeyMappings: nil,
+	}
+
 	for _, behavior := range behaviors {
+
+		if db.ComparePathMappings(behavior.PathMapping, zombieBehavior.PathMapping) || behavior.KeyMappings == nil {
+
+			continue
+
+		}
 
 		serverMux.HandleFunc(behavior.PathMapping.Path, GetHandler(behavior))
 
 	}
 
-	server = http.Server{Addr: ":80", Handler: serverMux}
+	server = http.Server{
+		Addr:    config.Conf.API.Production.Address + ":" + config.Conf.API.Production.Port,
+		Handler: serverMux}
 
 }
 
@@ -62,7 +77,9 @@ func prepareConfigServer() {
 
 	}
 
-	configServer = http.Server{Addr: ":9090", Handler: configServerMux}
+	configServer = http.Server{
+		Addr:    config.Conf.API.Management.Address + ":" + config.Conf.API.Management.Port,
+		Handler: configServerMux}
 
 }
 
@@ -101,9 +118,7 @@ func checkHealth() {
 
 // StartServers applies all behaviors and starts to listen for requests
 func StartServers() {
-
 	log.Println("Starting servers")
-
 	go listen()
 
 	go listenConfig()
@@ -112,7 +127,7 @@ func StartServers() {
 
 func startServer() {
 
-	log.Println("Listen requests to user-defined endpoints in port 80")
+	log.Println("Listen requests to user-defined endpoints in port " + config.Conf.API.Production.Port)
 	if err := server.ListenAndServe(); err != http.ErrServerClosed {
 	}
 
@@ -120,7 +135,7 @@ func startServer() {
 
 func startConfigServer() {
 
-	log.Println("Configuring config server")
+	log.Println("Configuring management server")
 
 	prepareConfigServer()
 
@@ -128,7 +143,7 @@ func startConfigServer() {
 
 	go func() {
 
-		log.Println("Listen requests to configuration endpoints in port 9090")
+		log.Println("Listen requests to configuration endpoints in port " + config.Conf.API.Management.Port)
 		log.Fatal(configServer.ListenAndServe())
 
 	}()
@@ -146,7 +161,7 @@ func listen() {
 
 	if needReload {
 
-		log.Println("Stopping server...")
+		log.Println("Behaviors change detected, stopping server...")
 
 		err := server.Shutdown(context.Background())
 
@@ -163,7 +178,6 @@ func listen() {
 }
 
 func listenConfig() {
-
 	prepareConfigServer()
 	startConfigServer()
 

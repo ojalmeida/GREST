@@ -30,7 +30,9 @@ type Config struct {
 	} `yaml:"Database"`
 }
 
+
 var Conf = Config{}
+
 
 /*
 	GConfig opens and turns the configuration file into a struct

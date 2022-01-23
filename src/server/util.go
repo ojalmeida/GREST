@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"github.com/ojalmeida/GREST/src/db"
+	"net/url"
 	"strings"
 )
 
@@ -57,6 +58,13 @@ func correctData(behavior db.Behavior, data map[string]string, direction string)
 func toGetPayload(queryString string) GetPayload {
 
 	result := GetPayload{}
+
+	if unescapedQueryString, err := url.QueryUnescape(queryString); err == nil {
+
+		queryString = unescapedQueryString
+
+	}
+
 	params := strings.Split(queryString, "&")
 
 	parametersMap := map[string]string{}

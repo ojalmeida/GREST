@@ -54,7 +54,18 @@ func ToMapSlice(unparsedData []map[string]interface{}) (parsedData []map[string]
 
 		for k, v := range unparsedData[index] {
 
-			parsedDatum[k] = fmt.Sprintf("%v", v)
+			switch v.(type) {
+
+			case int64, int32, int16, int8, int, uint64, uint32, uint16, uint8, uint:
+
+				parsedDatum[k] = fmt.Sprintf("%d", v)
+
+			default:
+
+				parsedDatum[k] = fmt.Sprintf("%s", v)
+
+			}
+
 		}
 
 		parsedData = append(parsedData, parsedDatum)
@@ -110,6 +121,8 @@ func ColumnExists(tableName, columnName, driverName string) bool {
 
 		rows, err := RemoteConn.Query("SELECT ? FROM ?", columnName, tableName)
 
+		defer rows.Close()
+
 		if err != nil {
 
 			return true
@@ -118,8 +131,6 @@ func ColumnExists(tableName, columnName, driverName string) bool {
 
 			return false
 		}
-
-		rows.Close()
 
 	case "mysql":
 
