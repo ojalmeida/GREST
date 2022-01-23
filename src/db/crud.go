@@ -64,6 +64,7 @@ func Create(tableName string, data map[string]string, driverName string) error {
 
 		return nil
 
+
 	default:
 
 		query := fmt.Sprintf("INSERT INTO %s ", tableName)

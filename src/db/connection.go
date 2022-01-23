@@ -16,13 +16,24 @@ import (
 func RemoteDB() *sqlx.DB {
 	log.Println("Establishing connection to local database")
 
-	conn, err := sqlx.Open(config.Conf.Database.DBMS, fmt.Sprintf("%s:%s@%s(%s:%s)/%s",
-		config.Conf.Database.Username,
-		config.Conf.Database.Password,
-		"tcp",
-		config.Conf.Database.Address,
-		config.Conf.Database.Port,
-		config.Conf.Database.Schema))
+	var conn *sqlx.DB
+	var err error
+
+	switch config.Conf.Database.DBMS {
+
+	case "sqlite3":
+
+		conn, err = sqlx.Open(config.Conf.Database.DBMS, config.Conf.Database.Address)
+
+	default:
+		conn, err = sqlx.Open(config.Conf.Database.DBMS, fmt.Sprintf("%s:%s@%s(%s:%s)/%s",
+			config.Conf.Database.Username,
+			config.Conf.Database.Password,
+			"tcp",
+			config.Conf.Database.Address,
+			config.Conf.Database.Port,
+			config.Conf.Database.Schema))
+	}
 
 	if err != nil {
 		log.Println("Fail!")
@@ -39,7 +50,9 @@ func LocalDB() *sqlx.DB {
 
 	log.Println("Establishing connection to local database")
 
-	dbname := "database.db"
+	home, _ := os.UserHomeDir()
+
+	dbname := home + "/.grest/database.db"
 	db, err := os.Open(dbname)
 
 	if err != nil {
