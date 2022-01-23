@@ -57,19 +57,12 @@ func Create(tableName string, data map[string]string, driverName string) error {
 		}
 
 		_, err = statement.Exec()
-		if err != nil {
-
-			return err
-
-		}
-
-		err = transaction.Commit()
+		_ = transaction.Commit()
 		if err != nil {
 			return err
 		}
 
-
-		return err
+		return nil
 
 	default:
 
@@ -276,18 +269,12 @@ func Update(tableName string, filters map[string]string, data map[string]string,
 		}
 
 		_, err = statement.Exec()
-		if err != nil {
-
-			return err
-
-		}
-
 		err = transaction.Commit()
 		if err != nil {
 			return err
 		}
 
-		return err
+		return nil
 
 	default:
 
@@ -354,18 +341,12 @@ func Delete(tableName string, filters map[string]string, driverName string) erro
 		}
 
 		_, err = statement.Exec()
-		if err != nil {
-
-			return err
-
-		}
-
 		err = transaction.Commit()
 		if err != nil {
 			return err
 		}
 
-		return err
+		return nil
 
 	default:
 
