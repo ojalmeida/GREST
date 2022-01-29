@@ -1,4 +1,4 @@
-# GREST - An API Framework
+# GREST - Next Generation API Framework
 
 The main goal of GREST is to make possible the implementation of an RESTFul APIs that consumes an SQL database without any programming skills.
 
