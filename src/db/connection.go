@@ -3,26 +3,108 @@ package db
 import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/ojalmeida/GREST/src/config"
+	"log"
+	"os"
 )
 
-var attributes = databaseAttributes{"root", "root", "127.0.0.1", "tcp", 3306}
+/*
+	RemoteDB is the connection with the user's database (MySQL)
+	This func needs e host, port and database to create the connection...
+*/
+func RemoteDB() *sqlx.DB {
+	log.Println("Establishing connection to local database")
 
-type databaseAttributes struct {
-	username string
-	password string
-	ip       string
-	protocol string
-	port     uint16
-}
+	var conn *sqlx.DB
+	var err error
 
-func GetConnection() *sqlx.DB {
+	switch config.Conf.Database.DBMS {
 
-	conn, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@%s(%s:%d)/grest", attributes.username, attributes.password, attributes.protocol, attributes.ip, attributes.port))
+	case "sqlite3":
+
+		conn, err = sqlx.Open(config.Conf.Database.DBMS, config.Conf.Database.Address)
+
+	default:
+		conn, err = sqlx.Open(config.Conf.Database.DBMS, fmt.Sprintf("%s:%s@%s(%s:%s)/%s",
+			config.Conf.Database.Username,
+			config.Conf.Database.Password,
+			"tcp",
+			config.Conf.Database.Address,
+			config.Conf.Database.Port,
+			config.Conf.Database.Schema))
+	}
 
 	if err != nil {
+		log.Println("Fail!")
 		panic(err.Error())
 	}
 
 	return conn
+}
 
+/*
+	LocalDB will connect to a local SQLITE database which stores GREST's configuration.
+*/
+func LocalDB() *sqlx.DB {
+
+	log.Println("Establishing connection to local database")
+
+	var home string
+	var err error
+
+	log.Println("Opening database file")
+
+	// Get user home
+	if home, err = os.UserHomeDir(); err != nil {
+
+		log.Fatal("Impossible to get user home directory")
+
+	}
+
+	var mainFolder = home + "/.grest"
+
+	if _, err = os.Stat(mainFolder); os.IsNotExist(err) {
+
+		log.Println(mainFolder + "does not exists, trying to create")
+
+		if err = os.Mkdir(mainFolder, 0660); err != nil {
+
+			log.Fatal(err.Error())
+
+		}
+
+		log.Println("\t└──Success")
+
+	}
+
+	dbname := mainFolder + "/database.db"
+	db, err := os.Open(dbname)
+
+	if err != nil {
+
+		log.Println(dbname, "was not found!")
+		log.Println("\t└──Trying to create", dbname)
+		_, err := os.Create(dbname)
+
+		if err != nil {
+			log.Println("\t\t└──Fail!")
+			panic(err.Error())
+		} else {
+			log.Println("\t\t└──Success")
+		}
+
+	} else {
+
+		log.Println(dbname, "found!")
+
+	}
+
+	db.Close()
+
+	conn, err := sqlx.Connect("sqlite3", dbname)
+	if err != nil {
+		panic(err.Error())
+	}
+	return conn
 }

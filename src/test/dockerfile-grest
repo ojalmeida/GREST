@@ -1,0 +1,19 @@
+FROM golang:latest
+
+WORKDIR /grest
+
+EXPOSE 80
+
+EXPOSE 9090
+
+ADD . .
+
+RUN apt -qq update
+RUN apt -qq install -y wget git curl mariadb-client sqlite3
+
+RUN go mod download
+RUN go build -o grest ./src/*.go
+
+RUN mkdir /root/.grest
+
+RUN chmod 700 grest

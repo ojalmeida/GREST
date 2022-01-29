@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
 )
 
@@ -53,7 +54,18 @@ func ToMapSlice(unparsedData []map[string]interface{}) (parsedData []map[string]
 
 		for k, v := range unparsedData[index] {
 
-			parsedDatum[k] = fmt.Sprintf("%s", v)
+			switch v.(type) {
+
+			case int64, int32, int16, int8, int, uint64, uint32, uint16, uint8, uint:
+
+				parsedDatum[k] = fmt.Sprintf("%d", v)
+
+			default:
+
+				parsedDatum[k] = fmt.Sprintf("%s", v)
+
+			}
+
 		}
 
 		parsedData = append(parsedData, parsedDatum)
@@ -63,39 +75,84 @@ func ToMapSlice(unparsedData []map[string]interface{}) (parsedData []map[string]
 
 }
 
-func TableExists(tableName string) bool {
+func TableExists(tableName string, driverName string) bool {
 
-	rows, _ := Conn.Query("SELECT TABLE_NAME FROM information_schema.TABLES where TABLE_NAME = ?", tableName)
+	var rows *sql.Rows
 
+	switch driverName {
 
-	defer rows.Close()
+	case "sqlite3-config":
 
-	if rows != nil {
+		rows, _ = LocalConn.Query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", tableName)
+		defer rows.Close()
 
-		return true
+		if rows != nil {
 
-	} else {
+			for rows.Next() {
 
-		return false
+				return true
+			}
+
+		}
+
+	case "mysql":
+
+		rows, _ = RemoteConn.Query("SELECT TABLE_NAME FROM information_schema.TABLES where TABLE_NAME = ?", tableName)
+		defer rows.Close()
+
+		if rows != nil {
+
+			for rows.Next() {
+
+				return true
+			}
+
+		}
 	}
+	return false
 
 }
 
-func ColumnExists(tableName, columnName string) bool {
+func ColumnExists(tableName, columnName, driverName string) bool {
 
-	rows, err := Conn.Query("SELECT column_name FROM information_schema.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?", tableName, columnName)
+	switch driverName {
 
-	if err != nil {
-		return false
+	case "sqlite3":
+
+		rows, err := RemoteConn.Query("SELECT ? FROM ?", columnName, tableName)
+
+		defer rows.Close()
+
+		if err != nil {
+
+			return true
+
+		} else {
+
+			return false
+		}
+
+	case "mysql":
+
+		rows, err := RemoteConn.Query("SELECT column_name FROM information_schema.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?", tableName, columnName)
+
+		if err != nil {
+			return false
+		}
+
+		defer rows.Close()
+
+		if rows != nil {
+
+			return true
+
+		} else {
+
+			return false
+
+		}
+
 	}
 
-	defer rows.Close()
-
-	if rows != nil {
-
-		return true
-	} else {
-		return false
-	}
-
+	return false
 }
