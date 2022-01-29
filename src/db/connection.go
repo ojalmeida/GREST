@@ -50,9 +50,35 @@ func LocalDB() *sqlx.DB {
 
 	log.Println("Establishing connection to local database")
 
-	home, _ := os.UserHomeDir()
+	var home string
+	var err error
 
-	dbname := home + "/.grest/database.db"
+	log.Println("Opening database file")
+
+	// Get user home
+	if home, err = os.UserHomeDir(); err != nil {
+
+		log.Fatal("Impossible to get user home directory")
+
+	}
+
+	var mainFolder = home + "/.grest"
+
+	if _, err = os.Stat(mainFolder); os.IsNotExist(err) {
+
+		log.Println(mainFolder + "does not exists, trying to create")
+
+		if err = os.Mkdir(mainFolder, 0660); err != nil {
+
+			log.Fatal(err.Error())
+
+		}
+
+		log.Println("\t└──Success")
+
+	}
+
+	dbname := mainFolder + "/database.db"
 	db, err := os.Open(dbname)
 
 	if err != nil {
@@ -63,6 +89,7 @@ func LocalDB() *sqlx.DB {
 
 		if err != nil {
 			log.Println("\t\t└──Fail!")
+			panic(err.Error())
 		} else {
 			log.Println("\t\t└──Success")
 		}
