@@ -84,7 +84,7 @@ To make it visible to world, in `/business/our-people` endpoint, do the followin
 1. To define the path mapping
 
 ```
-curl -s http://[IP of server running GREST]:[port]/config/path-mappings -X POST -d [payload]
+curl -s http://[IP of server running GREST]:9090/config/path-mappings -X POST -d [payload]
 ```
 
 ```
@@ -104,7 +104,7 @@ Payload:
 
 
 ```
-curl -s http://[IP of server running GREST]:[port]/config/key-mappings -X POST -d [payload]
+curl -s http://[IP of server running GREST]:9090/config/key-mappings -X POST -d [payload]
 ```
 
 ```
@@ -121,7 +121,7 @@ Payload:
 ```
 
 ```
-curl -s http://[IP of server running GREST]:[port]/config/key-mappings -X POST -d [payload]
+curl -s http://[IP of server running GREST]:9090/config/key-mappings -X POST -d [payload]
 ```
 
 ```
@@ -140,7 +140,7 @@ Payload:
 3. To group it in a behavior
 
 ```
-curl -s http://[IP of server running GREST]:[port]/config/behaviors -X POST -d [payload]
+curl -s http://[IP of server running GREST]:9090/config/behaviors -X POST -d [payload]
 ```
 
 ```
@@ -156,7 +156,7 @@ Payload:
 ```
 
 ```
-curl -s http://[IP of server running GREST]:[port]/config/behaviors -X POST -d [payload]
+curl -s http://[IP of server running GREST]:9090/config/behaviors -X POST -d [payload]
 ```
 
 ```
@@ -198,13 +198,13 @@ At this point, you already will be able to access the `Employee_name` and the `E
 
 
 ```
-curl -s http://[IP of server running GREST]:[port]/business/our-people
+curl -s http://[IP of server running GREST]:8080/business/our-people
 ```
 
 You also will be able to make request with some filters, like:
 
 ```
-curl -s http://[IP of server running GREST]:[port]/business/our-people?name=Paul
+curl -s http://[IP of server running GREST]:8080/business/our-people?name=Paul
 ```
 
 
@@ -231,13 +231,13 @@ Im below, examples of all:
 **GET**
 
 ```
-curl -s http://[IP of server running GREST]:[port]/business/our-people?name=Paul&email=pa@email.com
+curl -s http://[IP of server running GREST]:8080/business/our-people?name=Paul&email=pa@email.com
 ```
 
 **POST**
 
 ```
-curl -s http://[IP of server running GREST]:[port]/business/our-people -X POST -d [payload]
+curl -s http://[IP of server running GREST]:8080/business/our-people -X POST -d [payload]
 ```
 
 ```
@@ -254,7 +254,7 @@ Payload:
 **PUT**
 
 ```
-curl -s http://[IP of server running GREST]:[port]/business/our-people -X PUT -d [payload]
+curl -s http://[IP of server running GREST]:8080/business/our-people -X PUT -d [payload]
 ```
 
 ```
@@ -274,7 +274,7 @@ Payload:
 **DELETE**
 
 ```
-curl -s http://[IP of server running GREST]:[port]/business/our-people -X DELETE -d [payload]
+curl -s http://[IP of server running GREST]:8080/business/our-people -X DELETE -d [payload]
 ```
 
 ```
@@ -292,7 +292,7 @@ Payload:
 **HEAD**
 
 ```
-curl -s http://[IP of server running GREST]:[port]/business/our-people
+curl -s http://[IP of server running GREST]:8080/business/our-people
 ```
 
 > HEAD method request and response does not contains body
@@ -301,7 +301,7 @@ curl -s http://[IP of server running GREST]:[port]/business/our-people
 **OPTIONS**
 
 ```
-curl -s http://[IP of server running GREST]:[port]/business/our-people -X OPTIONS
+curl -s http://[IP of server running GREST]:8080/business/our-people -X OPTIONS
 ```
 
 > OPTIONS method request and response does not contains body
