@@ -30,9 +30,7 @@ type Config struct {
 	} `yaml:"Database"`
 }
 
-
 var Conf = Config{}
-
 
 /*
 	GConfig opens and turns the configuration file into a struct
@@ -46,8 +44,36 @@ var Conf = Config{}
 	5. return Config structure
 */
 func init() {
-	confFile := "config.yaml"
+
+	var home string
+	var err error
+
 	log.Println("Opening configuration file")
+
+	// Get user home
+	if home, err = os.UserHomeDir(); err != nil {
+
+		log.Fatal("Impossible to get user home directory")
+
+	}
+
+	var mainFolder = home + "/.grest"
+
+	if _, err = os.Stat(mainFolder); os.IsNotExist(err) {
+
+		log.Println(mainFolder + " does not exists, trying to create")
+
+		if err = os.Mkdir(mainFolder, 0660); err != nil {
+
+			log.Fatal(err.Error())
+
+		}
+
+		log.Println("\t└──Success")
+
+	}
+
+	confFile := mainFolder + "/config.yaml"
 	cf, err := os.Open(confFile)
 	if err != nil {
 		log.Println(confFile, "was not found!")
@@ -55,6 +81,7 @@ func init() {
 		_, err = os.Create(confFile)
 		if err != nil {
 			log.Println("\t\t└──Fail!")
+			panic(err.Error())
 		} else {
 			log.Println("\t\t├──Success")
 			log.Println("\t\t└──Writing default configuration")
