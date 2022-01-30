@@ -30,6 +30,17 @@ func CreateTables() (err error) {
 		value	TEXT NOT NULL
 	);`)
 
+	// User Profile
+	statement5, _ := transaction.Prepare(`CREATE TABLE IF NOT EXISTS Profile (
+    	uid			INTEGER PRIMARY KEY AUTOINCREMENT,
+		Username	TEXT NOT NULL,
+		Passkey		TEXT NOT NULL,
+		Perm		INTEGER, /* REFERENCES Perm(PID), */
+		Token		TEXT NOT NULL,
+		Created		DATE NOT NULL,
+		LstUse		DATE NULL
+	);`)
+
 	_, err = statement1.Exec()
 	if err != nil {
 		log.Println(err)
@@ -57,6 +68,16 @@ func CreateTables() (err error) {
 	}
 
 	_, err = statement4.Exec()
+	if err != nil {
+
+		err = transaction.Rollback()
+		if err != nil {
+			return err
+		}
+
+	}
+
+	_, err = statement5.Exec()
 	if err != nil {
 
 		err = transaction.Rollback()
