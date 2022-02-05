@@ -1,6 +1,7 @@
 package db
 
 import (
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -9,8 +10,8 @@ import (
 
 /*
 	TokenValidation validates the token if authentication required.
-	The function returns a string with the Username a bool value
-	which references to if the Token is from a valid user or not.
+	The function returns a string with the Username and bool value
+	which references to whether the Token is from valid user or not.
  */
 func TokenValidation(r *http.Request) Profile {
 	var profile Profile
@@ -28,6 +29,11 @@ func TokenValidation(r *http.Request) Profile {
 		} else {
 			profile.Username = User
 			profile.Authenticated = true
+			// Update last interaction with this profile.
+			_,err := LocalConn.Exec("UPDATE Profile SET LstUse = datetime(strftime('%s','now'),'unixepoch', 'localtime') WHERE Username = ?;",User)
+			if err != nil {
+				log.Println(err.Error())
+			}
 		}
 	} else {
 		profile.Authenticated = false
@@ -51,7 +57,7 @@ func CreateUser(profile Profile) error {
 		profile.Token = Randomstring(64)
 	}
 
-	_, err = stt.Exec(profile.Username,profile.Password,7,profile.Token)
+	_, err = stt.Exec(profile.Username,profile.Password,0,profile.Token)
 	if err != nil {
 		return err
 	}
@@ -60,15 +66,52 @@ func CreateUser(profile Profile) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func Permission(profile Profile, action string) error {
+/*
+	Permission handle user permissions read/write/edit
+	Parameters: Profile and action. Return error.
+	Actions:
+	set - Set/change permission.
+	get - Return permission.
+ */
+func Permission(profile Profile, action string) (string,error) {
 	switch action {
 	case "set":
-		
+		transaction, err := LocalConn.Begin()
+		if err != nil {
+			return "",err
+		}
+		_,err = transaction.Exec("UPDATE Profile SET Perm = ? WHERE Username = ?;",profile.Perm,profile.Username)
+		if err != nil {
+			return "OK",err
+		}
+	case "get":
+		row := LocalConn.QueryRow("SELECT Perm FROM Profile WHERE Username = ?;",profile.Username)
+		var perm string
+		err := row.Scan(&perm)
+		if err != nil {
+			return "",err
+		} else {
+			return perm,nil
+		}
+	default:
+
 	}
+	return "",nil
+}
+
+
+/*
+	DropUser has the function to delete user.
+ */
+func DropUser(p Profile) error {
+	_,err := LocalConn.Exec("DELETE FROM Profile WHERE Username = ?;",p.Username)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 
