@@ -19,18 +19,18 @@ type PathMapping struct {
 	Profile User definition.
 	Perm Model:
 	1 Read
-	2 Create
+	2 Write
 	4 Edit/Delete
 
-	1+2   = 3 Read/Create
+	1+2   = 3 Read/Write
 	1+2+4 = 7 ALL
- */
+*/
 type Profile struct {
-	uid      	int    // Not needed
-	Username 	string
-	Password 	string
-	Perm		int
-	Token		string
+	uid      int // Not needed
+	Username string
+	Password string
+	Perm     int
+	Token    string
 
 	Authenticated bool
 }

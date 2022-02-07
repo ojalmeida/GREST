@@ -31,14 +31,14 @@ func CreateTables() (err error) {
 	);`)
 
 	// User Profile
-	statement5, _ := transaction.Prepare(`CREATE TABLE IF NOT EXISTS Profile (
+	statement5, _ := transaction.Prepare(`CREATE TABLE IF NOT EXISTS profile (
     	uid			INTEGER PRIMARY KEY AUTOINCREMENT,
-		Username	TEXT NOT NULL,
-		Passkey		TEXT NOT NULL,
-		Perm		INTEGER, /* REFERENCES Perm(PID), */
-		Token		TEXT NOT NULL,
-		Created		DATE NOT NULL,
-		LstUse		DATE NULL
+		username	TEXT NOT NULL,
+		passkey		TEXT NOT NULL,
+		perm		INTEGER, /* REFERENCES Perm(PID), */
+		token		TEXT NOT NULL,
+		created		DATE NOT NULL,
+		lstUse		DATE NULL
 	);`)
 
 	_, err = statement1.Exec()

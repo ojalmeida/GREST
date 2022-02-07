@@ -1095,87 +1095,29 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 
 		return func(writer http.ResponseWriter, request *http.Request) {
 
-			// In the end of processing, if equals 1, reload serverMux
-			var needReload = float32(0)
-
 			switch request.Method {
-
-			case http.MethodGet:
 
 			case http.MethodPost:
 
+				// get token
+
 			case http.MethodPut:
+
+				// change token
 
 			case http.MethodDelete:
 
+				// expire token
+
 			case http.MethodOptions:
 
-			case http.MethodHead:
+				// methods allowed
 
-			}
-
-			if needReload == 1 {
 			}
 
 		}
 
 	case "/config/rate-limit":
-
-		return func(writer http.ResponseWriter, request *http.Request) {
-
-			// In the end of processing, if equals 1, reload serverMux
-			var needReload = float32(0)
-
-			switch request.Method {
-
-			case http.MethodGet:
-
-			case http.MethodPost:
-
-			case http.MethodPut:
-
-			case http.MethodDelete:
-
-			case http.MethodOptions:
-
-			case http.MethodHead:
-
-			}
-
-			if needReload == 1 {
-			}
-
-		}
-
-	case "/config/users":
-
-		return func(writer http.ResponseWriter, request *http.Request) {
-
-			// In the end of processing, if equals 1, reload serverMux
-			var needReload = float32(0)
-
-			switch request.Method {
-
-			case http.MethodGet:
-
-			case http.MethodPost:
-
-			case http.MethodPut:
-
-			case http.MethodDelete:
-
-			case http.MethodOptions:
-
-			case http.MethodHead:
-
-			}
-
-			if needReload == 1 {
-			}
-
-		}
-
-	case "/config/groups":
 
 		return func(writer http.ResponseWriter, request *http.Request) {
 
