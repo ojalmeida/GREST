@@ -171,6 +171,9 @@ Payload:
 
 ```
 
+To make this API more clear, there is a [Collection](https://www.getpostman.com/collections/6f63ff46d0d740b6ad1c) that you can use in the Postman App :D
+
+
 Data defined in this moment in GREST:
 
 ```
