@@ -2,7 +2,9 @@ package db
 
 import (
 	"fmt"
+	_ "github.com/denisenkom/go-mssqldb"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/ojalmeida/GREST/src/config"
 	"log"
@@ -25,7 +27,8 @@ func RemoteDB() *sqlx.DB {
 
 		conn, err = sqlx.Open(config.Conf.Database.DBMS, config.Conf.Database.Address)
 
-	default:
+	case "mysql", "mariadb":
+
 		conn, err = sqlx.Open(config.Conf.Database.DBMS, fmt.Sprintf("%s:%s@%s(%s:%s)/%s",
 			config.Conf.Database.Username,
 			config.Conf.Database.Password,
@@ -33,9 +36,29 @@ func RemoteDB() *sqlx.DB {
 			config.Conf.Database.Address,
 			config.Conf.Database.Port,
 			config.Conf.Database.Schema))
+
+	case "sqlserver":
+
+		conn, err = sqlx.Open(config.Conf.Database.DBMS, fmt.Sprintf("%s://%s:%s@%s:%s?database=%s",
+			config.Conf.Database.DBMS,
+			config.Conf.Database.Username,
+			config.Conf.Database.Password,
+			config.Conf.Database.Address,
+			config.Conf.Database.Port,
+			config.Conf.Database.Schema))
+
+	case "postgres":
+
+		conn, err = sqlx.Open(config.Conf.Database.DBMS, fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			config.Conf.Database.Address,
+			config.Conf.Database.Port,
+			config.Conf.Database.Username,
+			config.Conf.Database.Password,
+			config.Conf.Database.Schema))
+
 	}
 
-	if err != nil {
+	if err != nil || conn == nil {
 		log.Println("Fail!")
 		panic(err.Error())
 	}
@@ -102,7 +125,7 @@ func LocalDB() *sqlx.DB {
 
 	db.Close()
 
-	conn, err := sqlx.Connect("sqlite3", dbname)
+	conn, err := sqlx.Open("sqlite3", dbname)
 	if err != nil {
 		panic(err.Error())
 	}
