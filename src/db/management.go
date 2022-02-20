@@ -218,7 +218,7 @@ func GetBehaviors() ([]Behavior, error) {
 
 		for i := range pathMappingIds {
 
-			rows, err := LocalConn.Queryx("SELECT b.key_mapping_id FROM behavior b INNER JOIN key_mapping km ON b.key_mapping_id = km.key_mapping_id WHERE b.path_mapping_id = ?", pathMappingIds[i])
+			rows, err := LocalConn.Query("SELECT b.key_mapping_id FROM behavior b INNER JOIN key_mapping km ON b.key_mapping_id = km.key_mapping_id WHERE b.path_mapping_id = ?", pathMappingIds[i])
 
 			if err != nil {
 				return []Behavior{}, err

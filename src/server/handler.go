@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ojalmeida/GREST/src/config"
 	"github.com/ojalmeida/GREST/src/db"
 	"io/ioutil"
 	"log"
@@ -14,7 +15,7 @@ import (
 // for the different http methods.
 func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *http.Request) {
 
-	var dbName = "mysql"
+	var dbName = config.Conf.Database.DBMS
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 

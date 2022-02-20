@@ -78,6 +78,7 @@ func ToMapSlice(unparsedData []map[string]interface{}) (parsedData []map[string]
 func TableExists(tableName string, driverName string) bool {
 
 	var rows *sql.Rows
+	var err error
 
 	switch driverName {
 
@@ -95,9 +96,9 @@ func TableExists(tableName string, driverName string) bool {
 
 		}
 
-	case "mysql":
+	case "sqlite3":
 
-		rows, _ = RemoteConn.Query("SELECT TABLE_NAME FROM information_schema.TABLES where TABLE_NAME = ?", tableName)
+		rows, _ = RemoteConn.Query("SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?", tableName)
 		defer rows.Close()
 
 		if rows != nil {
@@ -108,49 +109,143 @@ func TableExists(tableName string, driverName string) bool {
 			}
 
 		}
+
+	case "mysql", "mariadb":
+
+		rows, err = RemoteConn.Query("SELECT table_name FROM information_schema.TABLES WHERE table_name = ?", tableName)
+		defer rows.Close()
+
+		if err != nil {
+			return false
+
+		}
+
+		if rows != nil {
+
+			for rows.Next() {
+
+				return true
+			}
+
+		}
+
+	case "sqlserver":
+
+		rows, err = RemoteConn.Query("SELECT table_name FROM information_schema.TABLES WHERE table_name = @p1", tableName)
+		defer rows.Close()
+
+		if err != nil {
+			return false
+
+		}
+
+		if rows != nil {
+
+			for rows.Next() {
+
+				return true
+			}
+
+		}
+
+	case "postgres":
+
+		rows, err = RemoteConn.Query("SELECT table_name FROM information_schema.TABLES WHERE table_name = $1", tableName)
+		defer rows.Close()
+
+		if err != nil {
+			return false
+
+		}
+
+		if rows != nil {
+
+			for rows.Next() {
+
+				return true
+			}
+
+		}
+
 	}
+
 	return false
 
 }
 
 func ColumnExists(tableName, columnName, driverName string) bool {
 
+	var rows *sql.Rows
+	var err error
+
 	switch driverName {
+
+	case "sqlite3-config":
+
+		rows, err = LocalConn.Query("SELECT ? FROM "+tableName+" LIMIT 1", columnName)
+
+		defer rows.Close()
+
+		if err != nil {
+
+			return false
+		}
+
+		return true
 
 	case "sqlite3":
 
-		rows, err := RemoteConn.Query("SELECT ? FROM ?", columnName, tableName)
+		rows, err = RemoteConn.Query("SELECT ? FROM "+tableName+" LIMIT 1", columnName)
 
 		defer rows.Close()
 
 		if err != nil {
 
-			return true
-
-		} else {
-
 			return false
 		}
 
-	case "mysql":
+		return true
 
-		rows, err := RemoteConn.Query("SELECT column_name FROM information_schema.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?", tableName, columnName)
+	case "mysql", "mariadb":
 
-		if err != nil {
-			return false
-		}
+		rows, err = RemoteConn.Query("SELECT ? FROM "+tableName+" LIMIT 1", columnName)
 
 		defer rows.Close()
 
-		if rows != nil {
-
-			return true
-
-		} else {
+		if err != nil {
 
 			return false
-
 		}
+
+		return true
+
+	case "sqlserver":
+
+		// table name can not be a query parameter in sql server
+		rows, err = RemoteConn.Query("SELECT @p1 FROM "+tableName, columnName)
+
+		defer rows.Close()
+
+		if err != nil {
+
+			return false
+		}
+
+		return true
+
+	case "postgres":
+
+		// table name can not be a query parameter in postgres
+		rows, err = RemoteConn.Query("SELECT $1 FROM "+tableName+" LIMIT 1", columnName)
+
+		defer rows.Close()
+
+		if err != nil {
+
+			return false
+		}
+
+		return true
 
 	}
 
