@@ -6,11 +6,14 @@ import (
 	"github.com/ojalmeida/GREST/src/db"
 	"log"
 	"net/http"
+	"time"
 )
 
 var implementedFunctionalities []string
 
 var reloadChannel = make(chan bool)
+
+var behaviorMode = "api"
 
 func init() {
 
@@ -26,19 +29,90 @@ func prepareServer() {
 
 	checkHealth()
 
-	log.Println("Getting user-defined endpoints")
+	if behaviorMode == "api" {
 
-	var err error
-	behaviors, err = db.GetBehaviors()
+		log.Println("Getting endpoints defined via API")
+		var err error
 
-	if err != nil {
+		// behaviors got by database query
+		behaviors, err = db.GetBehaviors()
 
-		log.Println("\t└──Fail!")
-		panic(err.Error())
+		if err != nil {
 
-	} else {
+			log.Println("\t└── Fail!")
+			panic(err.Error())
 
-		log.Println("\t└──Success!")
+		} else {
+
+			log.Println("\t└── Success!")
+		}
+
+	} else if behaviorMode == "file" {
+
+		log.Println("Getting declared endpoints")
+		var errs []error
+
+		// behaviors declared in file
+		unverifiedBehaviors, errs := getDeclaredBehaviors()
+
+		if len(unverifiedBehaviors) > 1 {
+
+			for i, pivotBehavior := range unverifiedBehaviors {
+
+				duplicatedBehavior := false
+				duplicatedPath := false
+				var duplicatedPathSlice = []db.Behavior{pivotBehavior}
+
+				for j, behavior := range unverifiedBehaviors {
+
+					if i == j {
+						continue
+					}
+
+					if pivotBehavior.PathMapping.Path == behavior.PathMapping.Path {
+
+						duplicatedPathSlice = append(duplicatedPathSlice, behavior)
+						duplicatedPath = true
+
+					}
+
+					if db.CompareBehaviors(pivotBehavior, behavior) {
+
+						duplicatedBehavior = true
+					}
+
+				}
+
+				if len(duplicatedPathSlice) != 1 {
+
+					log.Println("\t└── duplicated path \"" + pivotBehavior.PathMapping.Path + "\" detected, skipping")
+
+				}
+
+				if !duplicatedPath || !duplicatedBehavior {
+
+					behaviors = append(behaviors, pivotBehavior)
+
+				}
+
+			}
+
+		} else {
+
+			behaviors = unverifiedBehaviors
+
+		}
+
+		if errs != nil {
+
+			for i := range errs {
+
+				log.Println("\t└── " + errs[i].Error())
+
+			}
+
+		}
+
 	}
 
 	serverMux = http.NewServeMux()
@@ -50,8 +124,10 @@ func prepareServer() {
 
 	for _, behavior := range behaviors {
 
+		// checks zombie behaviors
 		if db.ComparePathMappings(behavior.PathMapping, zombieBehavior.PathMapping) || behavior.KeyMappings == nil {
 
+			log.Println("\t└── Zombie behavior ignored")
 			continue
 
 		}
@@ -120,8 +196,13 @@ func checkHealth() {
 func StartServers() {
 	log.Println("Starting servers")
 	go listen()
-
 	go listenConfig()
+
+	if behaviorMode == "file" {
+
+		time.Sleep(time.Second * 5)
+		go listenToDeclarationChanges()
+	}
 
 }
 
@@ -150,6 +231,7 @@ func startConfigServer() {
 
 }
 
+// Serves the configured API
 func listen() {
 
 	log.Println("Starting server")
@@ -177,8 +259,77 @@ func listen() {
 
 }
 
+// Serves the config API
 func listenConfig() {
 	prepareConfigServer()
 	startConfigServer()
+
+}
+
+// Detects changes in behavior declaration files and triggers server reload
+func listenToDeclarationChanges() {
+
+	var previousDeclaredBehaviors []db.Behavior
+
+	for {
+
+		time.Sleep(time.Second)
+
+		declaredBehaviors, _ := getDeclaredBehaviors()
+
+		declaredBehaviorsChange := false
+
+		// Compare content of behaviors on slices
+		for i := range declaredBehaviors {
+
+			alreadyExists := false
+
+			toBeInsertedBehavior := declaredBehaviors[i]
+
+			for j := range previousDeclaredBehaviors {
+
+				if behaviors != nil {
+
+					alreadyInsertedBehavior := behaviors[j]
+
+					if db.CompareBehaviors(alreadyInsertedBehavior, toBeInsertedBehavior) {
+
+						alreadyExists = true
+
+						break
+					}
+
+				}
+
+			}
+
+			if !alreadyExists {
+
+				declaredBehaviorsChange = true
+
+				break
+
+			}
+
+		}
+
+		// Compare number of behaviors on slices
+		if !declaredBehaviorsChange {
+
+			declaredBehaviorsChange = len(declaredBehaviors) != len(previousDeclaredBehaviors)
+
+		}
+
+		if declaredBehaviorsChange && previousDeclaredBehaviors != nil {
+
+			previousDeclaredBehaviors = declaredBehaviors
+			reloadChannel <- true
+
+		} else if previousDeclaredBehaviors == nil {
+
+			previousDeclaredBehaviors = declaredBehaviors
+
+		}
+	}
 
 }

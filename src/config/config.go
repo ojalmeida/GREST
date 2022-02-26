@@ -32,6 +32,8 @@ type Config struct {
 
 var Conf = Config{}
 
+var MainFolder string
+
 /*
 	GConfig opens and turns the configuration file into a struct
 	that will be used as base to start the connections.
@@ -57,13 +59,13 @@ func init() {
 
 	}
 
-	var mainFolder = home + "/.grest"
+	MainFolder = home + "/.grest"
 
-	if _, err = os.Stat(mainFolder); os.IsNotExist(err) {
+	if _, err = os.Stat(MainFolder); os.IsNotExist(err) {
 
-		log.Println(mainFolder + " does not exists, trying to create")
+		log.Println(MainFolder + " does not exists, trying to create")
 
-		if err = os.Mkdir(mainFolder, 0660); err != nil {
+		if err = os.Mkdir(MainFolder, 0660); err != nil {
 
 			log.Fatal(err.Error())
 
@@ -73,7 +75,7 @@ func init() {
 
 	}
 
-	confFile := mainFolder + "/config.yaml"
+	confFile := MainFolder + "/config.yaml"
 	cf, err := os.Open(confFile)
 	if err != nil {
 		log.Println(confFile, "was not found!")
