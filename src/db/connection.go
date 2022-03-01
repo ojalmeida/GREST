@@ -73,42 +73,42 @@ func LocalDB() *sqlx.DB {
 
 	log.Println("Establishing connection to local database")
 
-	var home string
 	var err error
 
 	log.Println("Opening database file")
 
 	// Get user home
-	if home, err = os.UserHomeDir(); err != nil {
+	//var home string
+	//if home, err = os.UserHomeDir(); err != nil {
+	//
+	//	log.Fatal("Impossible to get user home directory")
+	//
+	//}
+	//
+	//var mainFolder = home + "/.grest/database.db"
+	//
+	//if _, err = os.Stat(mainFolder); os.IsNotExist(err) {
+	//
+	//	log.Println(mainFolder + "does not exists, trying to create")
+	//
+	//	if err = os.Mkdir(mainFolder, 0660); err != nil {
+	//
+	//		log.Fatal(err.Error())
+	//
+	//	}
+	//
+	//	log.Println("\t└──Success")
+	//
+	//}
 
-		log.Fatal("Impossible to get user home directory")
-
-	}
-
-	var mainFolder = home + "/.grest"
-
-	if _, err = os.Stat(mainFolder); os.IsNotExist(err) {
-
-		log.Println(mainFolder + "does not exists, trying to create")
-
-		if err = os.Mkdir(mainFolder, 0660); err != nil {
-
-			log.Fatal(err.Error())
-
-		}
-
-		log.Println("\t└──Success")
-
-	}
-
-	dbname := mainFolder + "/database.db"
-	db, err := os.Open(dbname)
+	//dbname := mainFolder + "/database.db"
+	db, err := os.Open(config.Conf.ConfDB.Path)
 
 	if err != nil {
 
-		log.Println(dbname, "was not found!")
-		log.Println("\t└──Trying to create", dbname)
-		_, err := os.Create(dbname)
+		log.Println(config.Conf.ConfDB.Path, "was not found!")
+		log.Println("\t└──Trying to create", config.Conf.ConfDB.Path)
+		_, err := os.Create(config.Conf.ConfDB.Path)
 
 		if err != nil {
 			log.Println("\t\t└──Fail!")
@@ -119,13 +119,13 @@ func LocalDB() *sqlx.DB {
 
 	} else {
 
-		log.Println(dbname, "found!")
+		log.Println(config.Conf.ConfDB.Path, "found!")
 
 	}
 
 	db.Close()
 
-	conn, err := sqlx.Open("sqlite3", dbname)
+	conn, err := sqlx.Open("sqlite3", config.Conf.ConfDB.Path)
 	if err != nil {
 		panic(err.Error())
 	}

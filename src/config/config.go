@@ -8,8 +8,8 @@ import (
 )
 
 type Config struct {
-	Project string `yaml:"Project"`
-	Version string `yaml:"Version"`
+	Project string  `yaml:"Project"`
+	Version float64 `yaml:"Version"`
 	API     struct {
 		Production struct {
 			Address string `yaml:"Address"`
@@ -28,6 +28,9 @@ type Config struct {
 		Username string `yaml:"Username"`
 		Password string `yaml:"Password"`
 	} `yaml:"Database"`
+	ConfDB struct {
+		Path string `yaml:"path"`
+	} `yaml:"ConfDB"`
 }
 
 var Conf = Config{}
@@ -65,7 +68,7 @@ func init() {
 
 		log.Println(MainFolder + " does not exists, trying to create")
 
-		if err = os.Mkdir(MainFolder, 0660); err != nil {
+		if err = os.Mkdir(MainFolder, 0770); err != nil {
 
 			log.Fatal(err.Error())
 
@@ -76,6 +79,8 @@ func init() {
 	}
 
 	confFile := MainFolder + "/config.yaml"
+	ConfDB := MainFolder + "/configdb.db"
+
 	cf, err := os.Open(confFile)
 	if err != nil {
 		log.Println(confFile, "was not found!")
@@ -88,7 +93,7 @@ func init() {
 			log.Println("\t\t├──Success")
 			log.Println("\t\t└──Writing default configuration")
 			file, _ := os.OpenFile(confFile, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-			_, err = file.WriteString(getDefaultConfig())
+			_, err = file.WriteString(getDefaultConfig(ConfDB))
 			if err != nil {
 				log.Println(err.Error())
 				log.Println("\t\t\t└──Fail!")
@@ -113,7 +118,7 @@ func init() {
 	}
 }
 
-func getDefaultConfig() string {
+func getDefaultConfig(path string) string {
 	return `
 Project: ProjectName
 Version: 1.0
@@ -133,5 +138,8 @@ Database:
   Schema: grestdb
   Username: root
   Password: root
+
+ConfDB:
+  path: ` + path + `
 `
 }
