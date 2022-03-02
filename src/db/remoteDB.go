@@ -7,9 +7,8 @@ import (
 
 var RemoteConn *sqlx.DB
 
-func init() {
+func ConnectToRemoteDB() {
 
-	// Remote Connection for Configuration.
 	RemoteConn = RemoteDB()
 
 }

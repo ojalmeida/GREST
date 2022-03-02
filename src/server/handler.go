@@ -1,12 +1,14 @@
 package server
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"github.com/ojalmeida/GREST/src/config"
 	"github.com/ojalmeida/GREST/src/db"
+	log "github.com/ojalmeida/GREST/src/log"
 	"io/ioutil"
-	"log"
+	"math/rand"
 	"net/http"
 	"net/url"
 )
@@ -19,11 +21,16 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 	return func(writer http.ResponseWriter, request *http.Request) {
 
-		log.Println(fmt.Sprintf("Request received from %s with method %s", request.RemoteAddr, request.Method))
+		rb := make([]byte, 32)
+		rand.Read(rb)
+
+		requestID := fmt.Sprintf("%s", md5.New().Sum(rb))
+
+		log.ServerLogger.Println(fmt.Sprintf("Request: %s %s %s %d %x", request.RemoteAddr, request.Method, request.URL, request.ContentLength, requestID))
 
 		writer.Header().Set("Content-Type", "application/json")
 		writer.Header().Set("Access-Control-Allow-Origin", "*")
-
+		writer.Header().Set("Cache-Control", "no-cache")
 		switch request.Method {
 
 		case http.MethodGet:
@@ -91,8 +98,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			writer.WriteHeader(responseStatus)
 			_, _ = writer.Write(response)
 
-			log.Println(fmt.Sprintf("Response status: %d", res.Status))
-			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+			log.ServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 		case http.MethodPost:
 
@@ -110,8 +116,6 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			writer.Header().Set("Content-Type", "application/json")
 
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 			if err != nil {
 				errors = append(errors, "Impossible to read body")
@@ -162,8 +166,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			writer.WriteHeader(res.Status)
 			_, _ = writer.Write(response)
 
-			log.Println(fmt.Sprintf("Response status: %d", res.Status))
-			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+			log.ServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 		case http.MethodPut:
 
@@ -179,8 +182,6 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			}
 
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 			if err != nil {
 				errors = append(errors, "Impossible to read body")
@@ -232,8 +233,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			writer.WriteHeader(res.Status)
 			_, _ = writer.Write(response)
 
-			log.Println(fmt.Sprintf("Response status: %d", res.Status))
-			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+			log.ServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 		case http.MethodDelete:
 			var res Response
@@ -248,8 +248,6 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			}
 
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 			if err != nil {
 				errors = append(errors, "Impossible to read body")
@@ -301,8 +299,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			writer.WriteHeader(res.Status)
 			_, _ = writer.Write(response)
 
-			log.Println(fmt.Sprintf("Response status: %d", res.Status))
-			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+			log.ServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 		case http.MethodHead:
 
@@ -318,8 +315,6 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			}
 
 			rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-			log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 			if err != nil {
 				errors = append(errors, "Impossible to read body")
@@ -362,8 +357,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 
 			writer.WriteHeader(res.Status)
 
-			log.Println(fmt.Sprintf("Response status: %d", res.Status))
-			log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+			log.ServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, 0, requestID))
 
 		case http.MethodOptions:
 
@@ -375,7 +369,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 			writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, HEAD, OPTIONS")
 			writer.WriteHeader(res.Status)
 
-			log.Println(fmt.Sprintf("Response status: %d", res.Status))
+			log.ServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, 0, requestID))
 
 		default:
 			writer.WriteHeader(http.StatusMethodNotAllowed)
@@ -384,7 +378,7 @@ func GetHandler(behavior db.Behavior) func(writer http.ResponseWriter, request *
 	}
 }
 
-func GetConfigHandler(endpoint string, reload chan bool) func(writer http.ResponseWriter, request *http.Request) {
+func GetConfigHandler(endpoint string) func(writer http.ResponseWriter, request *http.Request) {
 
 	driverName := "sqlite3-config"
 
@@ -393,6 +387,17 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 	case "/config/behaviors":
 
 		return func(writer http.ResponseWriter, request *http.Request) {
+
+			rb := make([]byte, 32)
+			rand.Read(rb)
+
+			requestID := fmt.Sprintf("%s", md5.New().Sum(rb))
+
+			log.ConfigServerLogger.Println(fmt.Sprintf("Request: %s %s %s %d %x", request.RemoteAddr, request.Method, request.URL, request.ContentLength, requestID))
+
+			writer.Header().Set("Content-Type", "application/json")
+			writer.Header().Set("Access-Control-Allow-Origin", "*")
+			writer.Header().Set("Cache-Control", "no-cache")
 
 			var needReload float32 = 0
 			tableName := "behavior"
@@ -440,8 +445,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(responseStatus)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodPost: // If Method is Post.
 
@@ -460,8 +464,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
-
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
 					responseStatus = http.StatusInternalServerError
@@ -497,8 +499,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(res.Status)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodPut: // If Method is Put
 
@@ -515,8 +516,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
 
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
-
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
 					responseStatus = http.StatusInternalServerError
@@ -554,8 +553,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(res.Status)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodDelete:
 				var res Response
@@ -570,8 +568,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -609,8 +605,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(res.Status)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodHead:
 
@@ -626,8 +621,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -656,13 +649,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 
 				writer.WriteHeader(res.Status)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, 0, requestID))
 
 			}
 
-			if needReload == 1 {
-				defer func() { reload <- true }()
+			if needReload == 1 && autoReload {
+				reloadMainServerChannel <- true
 			}
 
 		}
@@ -673,6 +665,13 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 
 		return func(writer http.ResponseWriter, request *http.Request) {
 
+			rb := make([]byte, 32)
+			rand.Read(rb)
+
+			requestID := fmt.Sprintf("%s", md5.New().Sum(rb))
+
+			log.ConfigServerLogger.Println(fmt.Sprintf("Request: %s %s %s %d %x", request.RemoteAddr, request.Method, request.URL, request.ContentLength, requestID))
+
 			// In the end of processing, if equals 1, reload serverMux
 			var needReload = float32(0)
 
@@ -719,8 +718,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(responseStatus)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodPost:
 
@@ -738,8 +736,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.Header().Set("Content-Type", "application/json")
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -774,8 +770,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(res.Status)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodPut:
 
@@ -791,8 +786,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -829,8 +822,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(res.Status)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodDelete:
 				var res Response
@@ -845,8 +837,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -882,8 +872,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(res.Status)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodHead:
 
@@ -899,8 +888,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -929,13 +916,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 
 				writer.WriteHeader(res.Status)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, 0, requestID))
 
 			}
 
-			if needReload == 1 {
-				defer func() { reload <- true }()
+			if needReload == 1 && autoReload {
+				reloadMainServerChannel <- true
 			}
 
 		}
@@ -946,6 +932,13 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 
 		return func(writer http.ResponseWriter, request *http.Request) {
 
+			rb := make([]byte, 32)
+			rand.Read(rb)
+
+			requestID := fmt.Sprintf("%s", md5.New().Sum(rb))
+
+			log.ConfigServerLogger.Println(fmt.Sprintf("Request: %s %s %s %d %x", request.RemoteAddr, request.Method, request.URL, request.ContentLength, requestID))
+
 			// In the end of processing, if equals 1, reload serverMux
 			var needReload = float32(0)
 
@@ -992,8 +985,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(responseStatus)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodPost:
 
@@ -1011,8 +1003,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.Header().Set("Content-Type", "application/json")
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -1047,8 +1037,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(res.Status)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodPut:
 
@@ -1064,8 +1053,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -1102,8 +1089,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(res.Status)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodDelete:
 				var res Response
@@ -1118,8 +1104,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -1155,8 +1139,7 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				writer.WriteHeader(res.Status)
 				_, _ = writer.Write(response)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, len(response), requestID))
 
 			case http.MethodHead:
 
@@ -1172,8 +1155,6 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 				}
 
 				rawReqPayload, err := ioutil.ReadAll(request.Body)
-
-				log.Println(fmt.Sprintf("Payload: %s", rawReqPayload))
 
 				if err != nil {
 					errors = append(errors, "Impossible to read body")
@@ -1202,13 +1183,12 @@ func GetConfigHandler(endpoint string, reload chan bool) func(writer http.Respon
 
 				writer.WriteHeader(res.Status)
 
-				log.Println(fmt.Sprintf("Response status: %d", res.Status))
-				log.Println(fmt.Sprintf("Errors: %s", res.Errors))
+				log.ConfigServerLogger.Println(fmt.Sprintf("Response: %d %d %x", res.Status, 0, requestID))
 
 			}
 
-			if needReload == 1 {
-				defer func() { reload <- true }()
+			if needReload == 1 && autoReload {
+				reloadMainServerChannel <- true
 			}
 
 		}
