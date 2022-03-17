@@ -4,34 +4,121 @@ import (
 	"context"
 	"github.com/ojalmeida/GREST/src/config"
 	"github.com/ojalmeida/GREST/src/db"
-	"log"
+	log "github.com/ojalmeida/GREST/src/log"
+	builtinLog "log"
 	"net/http"
+	"sync"
 	"time"
 )
 
-var implementedFunctionalities []string
+var (
+	reloadMainServerChannel         chan bool
+	stopMainServerChannel           chan bool
+	reloadConfigServerChannel       chan bool
+	stopConfigServerChannel         chan bool
+	stopDeclarationListeningChannel chan bool
+	reloadAppChannel                chan bool
+)
 
-var reloadChannel = make(chan bool)
+func Start() {
 
-var behaviorMode = "api"
+	builtinLog.Println("Starting GREST")
 
-func init() {
+	wg := &sync.WaitGroup{}
 
-	implementedFunctionalities = append(implementedFunctionalities,
-		"/config/behaviors",
-		"/config/path-mappings",
-		"/config/key-mappings")
+	wg.Add(1)
+	config.Start(&reloadAppChannel, wg)
+
+	log.Start()
+
+	initVariables()
+	initDatabases()
+
+	switch declarationMode {
+
+	case "api":
+
+		wg.Add(1)
+		go startConfigServer(wg)
+
+	case "file":
+
+		wg.Add(1)
+		go listenToDeclarationChanges(wg)
+
+	}
+
+	wg.Add(1)
+	go startMainServer(wg)
+
+	<-reloadAppChannel // blocks execution
+
+	log.InfoLogger.Println("Application reload requested")
+
+	log.InfoLogger.Println("Reloading application")
+
+	stopMainServerChannel <- true
+
+	switch declarationMode {
+
+	case "api":
+
+		stopConfigServerChannel <- true
+
+	case "file":
+
+		stopDeclarationListeningChannel <- true
+
+	}
+
+	closeChannels(
+		&reloadAppChannel,
+		&reloadMainServerChannel,
+		&reloadConfigServerChannel,
+		&stopMainServerChannel,
+		&stopConfigServerChannel,
+		&stopDeclarationListeningChannel,
+	)
+
+	wg.Wait()
 
 }
 
-// Transform each behavior in a function that process requests
-func prepareServer() {
+func initVariables() {
 
-	checkHealth()
+	initChannels(
+		&reloadAppChannel,
+		&reloadMainServerChannel,
+		&reloadConfigServerChannel,
+		&stopMainServerChannel,
+		&stopConfigServerChannel,
+		&stopDeclarationListeningChannel,
+	)
 
-	if behaviorMode == "api" {
+	time.Sleep(time.Millisecond * 500)
 
-		log.Println("Getting endpoints defined via API")
+	autoReload = config.Conf.Configuration.AutoReload
+	declarationMode = config.Conf.Configuration.DeclarationMode
+
+}
+
+func initDatabases() {
+
+	db.ConnectToRemoteDB()
+	if declarationMode == "api" {
+
+		db.ConnectToLocalDB()
+
+	}
+}
+
+func prepareMainServer() {
+
+	log.InfoLogger.Println("Configuring server")
+
+	if declarationMode == "api" {
+
+		log.InfoLogger.Println("Getting endpoints defined via API")
 		var err error
 
 		// behaviors got by database query
@@ -39,21 +126,21 @@ func prepareServer() {
 
 		if err != nil {
 
-			log.Println("\t└── Fail!")
+			log.ErrorLogger.Println("Fail on getting endpoints defined via API")
 			panic(err.Error())
 
 		} else {
 
-			log.Println("\t└── Success!")
+			log.InfoLogger.Println("Success on getting endpoints defined via API")
 		}
 
-	} else if behaviorMode == "file" {
+	} else if declarationMode == "file" {
 
-		log.Println("Getting declared endpoints")
+		log.InfoLogger.Println("Getting endpoints declared via file")
 		var errs []error
 
 		// behaviors declared in file
-		unverifiedBehaviors, errs := getDeclaredBehaviors()
+		unverifiedBehaviors, errs := db.GetDeclaredBehaviors()
 
 		if len(unverifiedBehaviors) > 1 {
 
@@ -85,7 +172,7 @@ func prepareServer() {
 
 				if len(duplicatedPathSlice) != 1 {
 
-					log.Println("\t└── duplicated path \"" + pivotBehavior.PathMapping.Path + "\" detected, skipping")
+					log.WarningLogger.Println("Duplicated path \"" + pivotBehavior.PathMapping.Path + "\" detected, skipping")
 
 				}
 
@@ -107,7 +194,7 @@ func prepareServer() {
 
 			for i := range errs {
 
-				log.Println("\t└── " + errs[i].Error())
+				log.ErrorLogger.Println(errs[i].Error())
 
 			}
 
@@ -127,7 +214,7 @@ func prepareServer() {
 		// checks zombie behaviors
 		if db.ComparePathMappings(behavior.PathMapping, zombieBehavior.PathMapping) || behavior.KeyMappings == nil {
 
-			log.Println("\t└── Zombie behavior ignored")
+			log.WarningLogger.Println("Zombie behavior ignored")
 			continue
 
 		}
@@ -140,49 +227,56 @@ func prepareServer() {
 		Addr:    config.Conf.API.Production.Address + ":" + config.Conf.API.Production.Port,
 		Handler: serverMux}
 
+	log.InfoLogger.Println("Success on configuring server")
+
 }
 
-// Assigns a function to each endpoint of implemented configuration functionalities
 func prepareConfigServer() {
+
+	log.InfoLogger.Println("Configuring management server")
+
+	checkHealth()
 
 	configServerMux = http.NewServeMux()
 
 	for i := range implementedFunctionalities {
 
-		configServerMux.HandleFunc(implementedFunctionalities[i], GetConfigHandler(implementedFunctionalities[i], reloadChannel))
+		configServerMux.HandleFunc(implementedFunctionalities[i], GetConfigHandler(implementedFunctionalities[i]))
 
 	}
 
 	configServer = http.Server{
 		Addr:    config.Conf.API.Management.Address + ":" + config.Conf.API.Management.Port,
-		Handler: configServerMux}
+		Handler: configServerMux,
+	}
+
+	log.InfoLogger.Println("Success on configuring management server")
 
 }
 
-// Checks pre-requisites to start server
 func checkHealth() {
 
-	log.Println("Checking health of config database")
+	log.InfoLogger.Println("Checking health of config database")
 
 	ok := db.CheckLocalDB()
 
 	if !ok {
 
-		log.Println("\t├──Not ok")
-		log.Println("\t└──Trying to self-healing")
+		log.WarningLogger.Println("Config database health not ok")
+		log.WarningLogger.Println("Trying to heal config database")
 
 		err := db.CreateTables()
 
 		if err != nil {
-			log.Println("\t\t└──Fail!")
+			log.ErrorLogger.Println("Fail on heal config database")
 			panic(err.Error())
 		} else {
-			log.Println("\t\t└──Success!")
+			log.WarningLogger.Println("Success on heal config database")
 		}
 
 	}
 
-	log.Println("Health ok")
+	log.InfoLogger.Println("Config database health ok")
 
 	var err error
 
@@ -192,144 +286,235 @@ func checkHealth() {
 
 }
 
-// StartServers applies all behaviors and starts to listen for requests
-func StartServers() {
-	log.Println("Starting servers")
-	go listen()
-	go listenConfig()
+func startMainServer(wg *sync.WaitGroup) {
 
-	if behaviorMode == "file" {
+	prepareMainServer()
 
-		time.Sleep(time.Second * 5)
-		go listenToDeclarationChanges()
-	}
-
-}
-
-func startServer() {
-
-	log.Println("Listen requests to user-defined endpoints in port " + config.Conf.API.Production.Port)
-	if err := server.ListenAndServe(); err != http.ErrServerClosed {
-	}
-
-}
-
-func startConfigServer() {
-
-	log.Println("Configuring management server")
-
-	prepareConfigServer()
-
-	log.Println("\t└──Success!")
+	log.InfoLogger.Println("Starting server")
 
 	go func() {
+		log.InfoLogger.Println("Listening requests to user-defined endpoints in port " + config.Conf.API.Production.Port)
 
-		log.Println("Listen requests to configuration endpoints in port " + config.Conf.API.Management.Port)
-		log.Fatal(configServer.ListenAndServe())
+		err := server.ListenAndServe()
 
+		if err != http.ErrServerClosed {
+
+			log.ErrorLogger.Println(err.Error())
+
+		} // blocks execution
 	}()
 
-}
+	select {
 
-// Serves the configured API
-func listen() {
+	case <-reloadMainServerChannel:
 
-	log.Println("Starting server")
+		if autoReload {
 
-	prepareServer()
-	go startServer()
+			log.InfoLogger.Println("Server reload requested")
 
-	needReload := <-reloadChannel
+			log.InfoLogger.Println("Reloading server")
+			err := server.Shutdown(context.Background())
 
-	if needReload {
+			if err != nil {
+				log.ErrorLogger.Println("Fail on stopping server: ", err.Error())
+			} else {
 
-		log.Println("Behaviors change detected, stopping server...")
+				log.InfoLogger.Println("Success on stopping server")
+			}
 
+			startMainServer(wg) // recursive function
+
+		}
+
+	case <-stopMainServerChannel:
+
+		log.InfoLogger.Println("Server stop requested")
+
+		log.InfoLogger.Println("Stopping server")
 		err := server.Shutdown(context.Background())
 
 		if err != nil {
-			log.Println("\t└──Fail!")
+			log.ErrorLogger.Println("Fail on stopping server: ", err.Error())
 		} else {
 
-			log.Println("\t└──Success!")
-			listen()
+			log.InfoLogger.Println("Success on stopping server")
 		}
+
+		wg.Done()
 
 	}
 
 }
 
-// Serves the config API
-func listenConfig() {
+func startConfigServer(wg *sync.WaitGroup) {
+
 	prepareConfigServer()
-	startConfigServer()
+
+	log.InfoLogger.Println("Starting config server")
+
+	go func() {
+
+		log.InfoLogger.Println("Listen requests to configuration endpoints in port " + config.Conf.API.Management.Port)
+
+		err := configServer.ListenAndServe()
+
+		if err != http.ErrServerClosed {
+
+			log.ErrorLogger.Println(err.Error())
+		}
+
+	}()
+
+	select {
+
+	case <-reloadConfigServerChannel:
+
+		log.InfoLogger.Println("Config server reload requested")
+
+		log.InfoLogger.Println("Reloading config server")
+
+		err := configServer.Shutdown(context.Background())
+
+		if err != nil {
+			log.ErrorLogger.Println("Fail on stopping server: ", err.Error())
+		} else {
+
+			log.InfoLogger.Println("Success on stopping server")
+		}
+
+		startConfigServer(wg) // recursive function
+
+	case <-stopConfigServerChannel:
+
+		log.InfoLogger.Println("Config server stop requested")
+
+		log.InfoLogger.Println("Stopping config server")
+
+		err := configServer.Shutdown(context.Background())
+
+		if err != nil {
+			log.ErrorLogger.Println("Fail on stopping config server: ", err.Error())
+		} else {
+
+			log.InfoLogger.Println("Success on stopping config server")
+		}
+
+		wg.Done()
+
+	}
 
 }
 
-// Detects changes in behavior declaration files and triggers server reload
-func listenToDeclarationChanges() {
+func listenToDeclarationChanges(wg *sync.WaitGroup) {
 
 	var previousDeclaredBehaviors []db.Behavior
+	firstRun := true
 
+loop:
 	for {
 
-		time.Sleep(time.Second)
+		select {
 
-		declaredBehaviors, _ := getDeclaredBehaviors()
+		case <-stopDeclarationListeningChannel:
+			break loop
 
-		declaredBehaviorsChange := false
+		default:
 
-		// Compare content of behaviors on slices
-		for i := range declaredBehaviors {
+			time.Sleep(time.Second)
 
-			alreadyExists := false
+			func() {
 
-			toBeInsertedBehavior := declaredBehaviors[i]
+				if declarationMode != "file" || !autoReload {
 
-			for j := range previousDeclaredBehaviors {
+					return
 
-				if behaviors != nil {
+				}
 
-					alreadyInsertedBehavior := behaviors[j]
+				declaredBehaviors, _ := db.GetDeclaredBehaviors()
 
-					if db.CompareBehaviors(alreadyInsertedBehavior, toBeInsertedBehavior) {
+				declaredBehaviorsChange := false
 
-						alreadyExists = true
+				if firstRun {
+
+					previousDeclaredBehaviors = declaredBehaviors
+					firstRun = false
+					return
+
+				}
+
+				// Compare content of behaviors on slices
+				for i := range declaredBehaviors {
+
+					alreadyExists := false
+
+					toBeInsertedBehavior := declaredBehaviors[i]
+
+					for j := range previousDeclaredBehaviors {
+
+						alreadyInsertedBehavior := previousDeclaredBehaviors[j]
+
+						if db.CompareBehaviors(alreadyInsertedBehavior, toBeInsertedBehavior) {
+
+							alreadyExists = true
+
+							break
+						}
+
+					}
+
+					if !alreadyExists {
+
+						declaredBehaviorsChange = true
 
 						break
+
 					}
 
 				}
 
-			}
+				// Compare number of behaviors on slices
+				if !declaredBehaviorsChange {
 
-			if !alreadyExists {
+					declaredBehaviorsChange = len(declaredBehaviors) != len(previousDeclaredBehaviors)
 
-				declaredBehaviorsChange = true
+				}
 
-				break
+				if declaredBehaviorsChange {
 
-			}
+					previousDeclaredBehaviors = declaredBehaviors
+					reloadMainServerChannel <- true
 
-		}
+				} else if previousDeclaredBehaviors == nil {
 
-		// Compare number of behaviors on slices
-		if !declaredBehaviorsChange {
+					previousDeclaredBehaviors = declaredBehaviors
 
-			declaredBehaviorsChange = len(declaredBehaviors) != len(previousDeclaredBehaviors)
+				}
 
-		}
-
-		if declaredBehaviorsChange && previousDeclaredBehaviors != nil {
-
-			previousDeclaredBehaviors = declaredBehaviors
-			reloadChannel <- true
-
-		} else if previousDeclaredBehaviors == nil {
-
-			previousDeclaredBehaviors = declaredBehaviors
+			}() // check changes
 
 		}
+
 	}
 
+	wg.Done()
+
+}
+
+func initChannels(channels ...*chan bool) {
+
+	for _, channel := range channels {
+
+		*channel = make(chan bool)
+
+	}
+
+}
+
+func closeChannels(channels ...*chan bool) {
+
+	for _, channel := range channels {
+
+		close(*channel)
+
+	}
 }

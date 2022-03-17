@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"github.com/ojalmeida/GREST/src/log"
 )
 
 func CompareBehaviors(behavior1 Behavior, behavior2 Behavior) bool {
@@ -116,6 +117,9 @@ func TableExists(tableName string, driverName string) bool {
 		defer rows.Close()
 
 		if err != nil {
+
+			log.ErrorLogger.Println(err.Error())
+
 			return false
 
 		}
@@ -135,6 +139,8 @@ func TableExists(tableName string, driverName string) bool {
 		defer rows.Close()
 
 		if err != nil {
+
+			log.ErrorLogger.Println(err.Error())
 			return false
 
 		}
@@ -154,6 +160,8 @@ func TableExists(tableName string, driverName string) bool {
 		defer rows.Close()
 
 		if err != nil {
+
+			log.ErrorLogger.Println(err.Error())
 			return false
 
 		}

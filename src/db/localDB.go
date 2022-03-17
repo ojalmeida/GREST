@@ -9,8 +9,8 @@ import (
 
 var LocalConn *sqlx.DB
 
-func init() {
-	// Remote connection.
+func ConnectToLocalDB() {
+
 	LocalConn = LocalDB()
 }
 

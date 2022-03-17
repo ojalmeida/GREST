@@ -1,9 +1,16 @@
 package db
 
 import (
+	"bufio"
+	"errors"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
-	"log"
+	"github.com/ojalmeida/GREST/src/config"
+	log "github.com/ojalmeida/GREST/src/log"
+	"os"
+	"regexp"
 	"strconv"
+	"strings"
 )
 
 func CreateTables() (err error) {
@@ -32,8 +39,7 @@ func CreateTables() (err error) {
 
 	_, err = statement1.Exec()
 	if err != nil {
-		log.Println(err)
-		panic(err.Error())
+		log.ErrorLogger.Panicln("Fail on trying to create tables :", err.Error())
 	}
 
 	_, err = statement2.Exec()
@@ -276,78 +282,111 @@ func GetBehaviors() ([]Behavior, error) {
 
 }
 
-// getPathMappings return an array of pathMapping present in the database
-func getPathMappings() ([]PathMapping, error) {
-
-	var pathMappings []PathMapping
+func GetDeclaredBehaviors() ([]Behavior, []error) {
 
 	var (
-		path  string
-		table string
+		declaredBehaviors []Behavior
+		behavior          Behavior
+		errs              []error
 	)
 
-	rows, err := LocalConn.Query("SELECT path, `table` FROM path_mapping;")
+	var pathMappingPattern = `expose\s*?(public|protected)\s*?table\s*?'\w+'\s*?as\s*?'/\w+'`
+	var keyMappingPattern = `\t+expose\s*?(public|protected)\s*?column\s*?'\w+'\s*?as\s*?'\w+'`
+
+	var pathMappingRegexp = regexp.MustCompile(pathMappingPattern)
+	var keyMappingRegexp = regexp.MustCompile(keyMappingPattern)
+
+	filePath := config.MainFolder + "/mappings.conf"
+
+	file, err := os.Open(filePath)
+	defer file.Close()
 
 	if err != nil {
-		return []PathMapping{}, err
+
+		errs = append(errs, err)
+
+		return nil, errs
 	}
 
-	if rows != nil {
+	readPathMappingDeclaration := func(line string) PathMapping {
 
-		defer rows.Close()
+		args := regexp.MustCompile(`\s+`).Split(line, -1)
 
-		for rows.Next() {
+		// privacy := args[1]
 
-			err = rows.Scan(&path, &table)
+		table := strings.Trim(args[3], "'")
 
-			if err != nil {
-				return []PathMapping{}, err
+		path := strings.Trim(args[5], "'")
+
+		return PathMapping{Path: path, Table: table}
+
+	}
+
+	readKeyMappingDeclaration := func(line string) KeyMapping {
+
+		line = strings.Trim(line, "\t")
+
+		args := regexp.MustCompile(`\s+`).Split(line, -1)
+
+		// privacy := args[1]
+
+		column := strings.Trim(args[3], "'")
+
+		key := strings.Trim(args[5], "'")
+
+		return KeyMapping{Key: key, Column: column}
+
+	}
+
+	scanner := bufio.NewScanner(file)
+	lineNumber := 0
+
+	for scanner.Scan() {
+
+		line := scanner.Text()
+		lineNumber += 1
+
+		// skip empty lines
+		if regexp.MustCompile(`^\s*$`).MatchString(line) {
+
+			continue
+		}
+
+		if ComparePathMappings(behavior.PathMapping, PathMapping{}) && pathMappingRegexp.MatchString(line) {
+
+			if !CompareBehaviors(behavior, Behavior{}) {
+
+				declaredBehaviors = append(declaredBehaviors, behavior)
+
+				behavior = Behavior{}
+
 			}
 
-			pathMappings = append(pathMappings, PathMapping{path, table})
+			behavior.PathMapping = readPathMappingDeclaration(line)
 
+		} else if !ComparePathMappings(behavior.PathMapping, PathMapping{}) && pathMappingRegexp.MatchString(line) {
+
+			declaredBehaviors = append(declaredBehaviors, behavior)
+
+			behavior = Behavior{}
+
+			behavior.PathMapping = readPathMappingDeclaration(line)
+
+		} else if ComparePathMappings(behavior.PathMapping, PathMapping{}) && keyMappingRegexp.MatchString(line) {
+
+			errs = append(errs, errors.New(fmt.Sprintf("expecting PathMapping declaration in line %d, got \"%s\"", lineNumber, line)))
+
+		} else if !ComparePathMappings(behavior.PathMapping, PathMapping{}) && keyMappingRegexp.MatchString(line) {
+
+			behavior.KeyMappings = append(behavior.KeyMappings, readKeyMappingDeclaration(line))
 		}
 
 	}
 
-	return pathMappings, nil
-
-}
-
-// getKeyMappings return an array of keyMapping present in the database
-func getKeyMappings() ([]KeyMapping, error) {
-
-	var keyMappings []KeyMapping
-
-	var (
-		key    string
-		column string
-	)
-
-	rows, err := LocalConn.Query("SELECT `key`, `column`  FROM key_mapping;")
-
-	if err != nil {
-		return []KeyMapping{}, err
+	if !CompareBehaviors(behavior, Behavior{}) {
+		declaredBehaviors = append(declaredBehaviors, behavior)
 	}
 
-	if rows != nil {
-
-		defer rows.Close()
-
-		for rows.Next() {
-
-			err = rows.Scan(&key, &column)
-
-			if err != nil {
-				return []KeyMapping{}, err
-			}
-
-			keyMappings = append(keyMappings, KeyMapping{key, column})
-
-		}
-
-	}
-
-	return keyMappings, nil
+	return declaredBehaviors, errs
 
 }

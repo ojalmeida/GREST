@@ -7,7 +7,7 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/ojalmeida/GREST/src/config"
-	"log"
+	log "github.com/ojalmeida/GREST/src/log"
 	"os"
 )
 
@@ -16,7 +16,7 @@ import (
 	This func needs e host, port and database to create the connection...
 */
 func RemoteDB() *sqlx.DB {
-	log.Println("Establishing connection to local database")
+	log.InfoLogger.Println("Establishing connection to remote database")
 
 	var conn *sqlx.DB
 	var err error
@@ -59,7 +59,7 @@ func RemoteDB() *sqlx.DB {
 	}
 
 	if err != nil || conn == nil {
-		log.Println("Fail!")
+		log.ErrorLogger.Println("Fail on establish connection with database")
 		panic(err.Error())
 	}
 
@@ -71,55 +71,53 @@ func RemoteDB() *sqlx.DB {
 */
 func LocalDB() *sqlx.DB {
 
-	log.Println("Establishing connection to local database")
+	log.InfoLogger.Println("Establishing connection to local database")
 
 	var err error
 
-	log.Println("Opening database file")
+	log.InfoLogger.Println("Opening database file")
 
 	// Get user home
-	//var home string
-	//if home, err = os.UserHomeDir(); err != nil {
-	//
-	//	log.Fatal("Impossible to get user home directory")
-	//
-	//}
-	//
-	//var mainFolder = home + "/.grest/database.db"
-	//
-	//if _, err = os.Stat(mainFolder); os.IsNotExist(err) {
-	//
-	//	log.Println(mainFolder + "does not exists, trying to create")
-	//
-	//	if err = os.Mkdir(mainFolder, 0660); err != nil {
-	//
-	//		log.Fatal(err.Error())
-	//
-	//	}
-	//
-	//	log.Println("\t└──Success")
-	//
-	//}
+	if home, err = os.UserHomeDir(); err != nil {
 
-	//dbname := mainFolder + "/database.db"
-	db, err := os.Open(config.Conf.ConfDB.Path)
+		log.ErrorLogger.Println("Impossible to get user home directory")
+
+	}
+
+	var mainFolder = home + "/.grest"
+
+	if _, err = os.Stat(mainFolder); os.IsNotExist(err) {
+
+		log.WarningLogger.Println(mainFolder + "does not exists, trying to create")
+
+		if err = os.Mkdir(mainFolder, 0660); err != nil {
+
+			log.ErrorLogger.Panicln("Fail on creating folder: ", err.Error())
+
+		}
+
+		log.WarningLogger.Println("Success on main folder creation")
+
+	}
+
+	dbname := mainFolder + "/database.db"
+	db, err := os.Open(dbname)
 
 	if err != nil {
 
-		log.Println(config.Conf.ConfDB.Path, "was not found!")
-		log.Println("\t└──Trying to create", config.Conf.ConfDB.Path)
-		_, err := os.Create(config.Conf.ConfDB.Path)
+		log.WarningLogger.Println(dbname, "was not found!")
+		log.WarningLogger.Println("Trying to create ", dbname)
+		_, err := os.Create(dbname)
 
 		if err != nil {
-			log.Println("\t\t└──Fail!")
-			panic(err.Error())
+			log.ErrorLogger.Panicln("Fail on ", dbname, " creation")
 		} else {
-			log.Println("\t\t└──Success")
+			log.WarningLogger.Println("Success on trying to create", dbname)
 		}
 
 	} else {
 
-		log.Println(config.Conf.ConfDB.Path, "found!")
+		log.InfoLogger.Println(dbname, "found")
 
 	}
 
