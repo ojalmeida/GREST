@@ -15,8 +15,8 @@ import (
 )
 
 type Config struct {
-	Project string `yaml:"Project"`
-	Version string `yaml:"Version"`
+	Project string  `yaml:"Project"`
+	Version float64 `yaml:"Version"`
 	API     struct {
 		Production struct {
 			Address string `yaml:"Address"`
@@ -163,7 +163,7 @@ func LoadConfigs() {
 
 		log.Println(MainFolder + " does not exists, trying to create")
 
-		if err = os.Mkdir(MainFolder, 0660); err != nil {
+		if err = os.Mkdir(MainFolder, 0770); err != nil {
 
 			log.Panicln(err.Error())
 
@@ -173,9 +173,9 @@ func LoadConfigs() {
 
 	}
 
+
 	confFilePath := MainFolder + "/config.yaml"
 	_, err := os.Open(confFilePath)
-
 	if err != nil {
 
 		log.Println(confFilePath, "was not found")
@@ -221,6 +221,7 @@ func LoadConfigs() {
 	}
 
 }
+
 
 func ChangeConfig(key, newValue string) error {
 

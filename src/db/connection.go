@@ -73,7 +73,6 @@ func LocalDB() *sqlx.DB {
 
 	log.InfoLogger.Println("Establishing connection to local database")
 
-	var home string
 	var err error
 
 	log.InfoLogger.Println("Opening database file")
@@ -124,7 +123,7 @@ func LocalDB() *sqlx.DB {
 
 	db.Close()
 
-	conn, err := sqlx.Open("sqlite3", dbname)
+	conn, err := sqlx.Open("sqlite3", config.Conf.ConfDB.Path)
 	if err != nil {
 		panic(err.Error())
 	}
